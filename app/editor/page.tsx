@@ -110,21 +110,30 @@ function EditorInner() {
     </div>
   );
 
-  async function downloadPNG() {
-    if (!previewRef.current || !paid) return;
-    setDownloading(true);
-    try {
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(previewRef.current, { pixelRatio: 4, backgroundColor: logo.palette.bg });
-      const a = document.createElement("a");
-      a.download = `${logo.name}-logo.png`;
-      a.href = dataUrl;
-      a.click();
-    } catch (e) {
-      console.error(e);
-    }
-    setDownloading(false);
+async function downloadPNG() {
+  if (!previewRef.current || !paid || !logo) return;
+
+  setDownloading(true);
+
+  try {
+    const { toPng } = await import("html-to-image");
+
+    const dataUrl = await toPng(previewRef.current, {
+      pixelRatio: 4,
+      backgroundColor: logo?.palette?.bg || "#ffffff",
+    });
+
+    const a = document.createElement("a");
+    a.download = `${logo.name}-logo.png`;
+    a.href = dataUrl;
+    a.click();
+  } catch (e) {
+    console.error(e);
   }
+
+  setDownloading(false);
+}
+
 
   const update = (patch: Partial<LogoConfig>) => setLogo(prev => prev ? { ...prev, ...patch } : prev);
   const updatePalette = (patch: Partial<LogoConfig["palette"]>) =>
