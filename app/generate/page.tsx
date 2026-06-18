@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import LogoView from "@/components/LogoView";
 import { generateLogos, type LogoConfig } from "@/lib/generator";
 import { inspoLogos } from "@/lib/inspoLogos";
@@ -34,7 +35,14 @@ export default function GeneratePage() {
   const [logos, setLogos] = useState<LogoConfig[]>([]);
   const [selectedLogo, setSelectedLogo] = useState<number|null>(null);
 
+  const router = useRouter();
   const progress = Math.round((step/7)*100);
+
+  function goToEditor() {
+    if (selectedLogo === null) return;
+    const logo = logos[selectedLogo];
+    router.push(`/editor?data=${encodeURIComponent(JSON.stringify(logo))}`);
+  }
 
   function goTo(n: number) {
     if (n === 7) { setLogos(generateLogos({name,slogan,industry},6)); setSelectedLogo(null); }
@@ -208,8 +216,9 @@ export default function GeneratePage() {
                 <LogoView key={i} logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
               ))}
             </div>
-            <button className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700">
-              Start customising →
+            <button onClick={goToEditor} disabled={selectedLogo === null}
+              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-40">
+              {selectedLogo === null ? "Select a logo first" : "Start customising →"}
             </button>
           </div>
         )}
