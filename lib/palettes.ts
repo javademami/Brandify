@@ -64,15 +64,41 @@ export const industryPalettes: Record<string, number[]> = {
   general:       [17, 7, 20, 18],
 };
 
-export function getPalettesForIndustry(industry: string): Palette[] {
+export function getPalettesForIndustry(industry: string, count: number = 12): Palette[] {
   const key = industry.toLowerCase().replace(/[\s&\-]+/g, "").replace(/machine.*/, "").replace(/learning.*/, "");
   
+  // صنعت-خاص palette‌های اولویت
+  let industryIds = [17, 7, 20, 18];
   for (const [k, ids] of Object.entries(industryPalettes)) {
     if (key.includes(k)) {
-      return ids.map(id => palettes.find(p => p.id === id)!).filter(Boolean);
+      industryIds = ids;
+      break;
     }
   }
-  return [palettes[16], palettes[6], palettes[19], palettes[17]];
+  
+  // شروع از industry-specific
+  const result: Palette[] = [];
+  const usedIds = new Set<number>();
+  
+  // ابتدا صنعت-خاص palette‌ها
+  for (const id of industryIds) {
+    const p = palettes.find(p => p.id === id);
+    if (p) {
+      result.push(p);
+      usedIds.add(id);
+    }
+  }
+  
+  // بقیه palette‌ها را اضافه کن تا به count برسیم
+  for (const p of palettes) {
+    if (result.length >= count) break;
+    if (!usedIds.has(p.id)) {
+      result.push(p);
+      usedIds.add(p.id);
+    }
+  }
+  
+  return result;
 }
 
 export function isDark(hex: string): boolean {

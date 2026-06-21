@@ -15,7 +15,7 @@ export interface LogoConfig {
   iconColor: string;
 }
 
-const LAYOUTS: Layout[] = ["iconTop", "iconLeft", "iconBig", "badge", "textOnly", "iconLeft"];
+const LAYOUTS: Layout[] = ["iconTop", "iconLeft", "iconBig", "badge", "textOnly"];
 
 const FONTS = [
   "'Playfair Display', serif",
@@ -26,8 +26,8 @@ const FONTS = [
   "'Outfit', sans-serif",
 ];
 
-const FONT_WEIGHTS = ["700", "800", "600", "900", "700", "800"];
-const BORDER_RADII = ["12px", "0px", "24px", "8px", "16px", "999px"];
+const FONT_WEIGHTS = ["400", "500", "600", "700", "800", "900"];
+const BORDER_RADII = ["0px", "8px", "12px", "16px", "20px", "24px", "32px", "999px"];
 
 const INDUSTRY_MAP: Record<string, string> = {
   ai: "ai", technology: "technology", startup: "startup", crypto: "crypto",
@@ -52,26 +52,39 @@ export interface GenerateInput {
   industry: string;
 }
 
-export function generateLogos(input: GenerateInput, count = 6): LogoConfig[] {
+export function generateLogos(input: GenerateInput, count = 12): LogoConfig[] {
   const { name, slogan, industry } = input;
-  const palettesForIndustry = getPalettesForIndustry(industry);
+  const allPalettes = getPalettesForIndustry(industry);
+  // اگر palette‌ها کمتر از count باشند، از تمام palette‌ها استفاده کن و cycle کن
   const folder = getIconFolder(industry);
   const logos: LogoConfig[] = [];
 
   for (let i = 0; i < count; i++) {
-    const palette = palettesForIndustry[i % palettesForIndustry.length];
-    const iconIndex = (i * 3 + 1) % 20 + 1; // 1,4,7,10,13,16,19,2,5,8...
+    // palette: cycle through available palettes
+    const palette = allPalettes[i % allPalettes.length];
+    
+    // icon: بهتر متنوع — استفاده از prime numbers
+    const iconIndex = ((i * 11 + 5) % 20) + 1; // 16,7,18,9,20,11,2,13,4,15,6,17,8,19,10,1,12,3,14,5
     const iconPath = `/icons/${folder}/${iconIndex}.svg`;
+    
+    // colors: بر اساس palette
     const dark = isDark(palette.bg);
-    const textColor = dark ? palette.primary : palette.accent;
-    const iconColor = dark ? "#ffffff" : palette.bg;
+    const textColor = dark ? palette.textLight : palette.textDark;
+    const iconColor = dark ? "#ffffff" : "#000000";
+
+    // layout: متنوع‌تر
+    const layout = LAYOUTS[(i * 2) % LAYOUTS.length];
+    
+    // font & weight: بیشتر متنوع
+    const font = FONTS[(i * 2) % FONTS.length];
+    const fontWeight = FONT_WEIGHTS[(i * 3 + 1) % FONT_WEIGHTS.length];
+    
+    // border radius: متنوع‌تر
+    const borderRadius = BORDER_RADII[(i * 4 + 2) % BORDER_RADII.length];
 
     logos.push({
       name, slogan, iconPath, palette,
-      layout: LAYOUTS[i % LAYOUTS.length],
-      font: FONTS[i % FONTS.length],
-      fontWeight: FONT_WEIGHTS[i % FONT_WEIGHTS.length],
-      borderRadius: BORDER_RADII[i % BORDER_RADII.length],
+      layout, font, fontWeight, borderRadius,
       textColor, iconColor,
     });
   }

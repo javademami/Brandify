@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="health8" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#eab308" />
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#health8)" stroke-width="5" stroke-linejoin="round">
+    <polygon points="50,14 82,32 82,68 50,86 18,68 18,32" fill="url(#health8)" fill-opacity="0.1" />
+    <path stroke-linecap="round" d="M50 80V45M50 55L32 40M50 62l18-15M50 45l12-18M50 50L38 32" stroke-width="4.5" />
+  </g>
+</svg>

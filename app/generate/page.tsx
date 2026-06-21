@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoView from "@/components/LogoView";
 import { generateLogos, type LogoConfig } from "@/lib/generator";
@@ -33,19 +33,36 @@ export default function GeneratePage() {
   const [likedInspo, setLikedInspo] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [logos, setLogos] = useState<LogoConfig[]>([]);
+  const [displayCount, setDisplayCount] = useState(12);
   const [selectedLogo, setSelectedLogo] = useState<number|null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
   const progress = Math.round((step/7)*100);
 
-  function goToEditor() {
-    if (selectedLogo === null) return;
-    const logo = logos[selectedLogo];
+  // Intersection Observer برای infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && displayCount < logos.length) {
+          setDisplayCount(prev => Math.min(prev + 12, logos.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [logos.length, displayCount]);
+
+  function goToEditor(logoIndex?: number) {
+    const index = logoIndex ?? selectedLogo;
+    if (index === null) return;
+    const logo = logos[index];
     router.push(`/editor?data=${encodeURIComponent(JSON.stringify(logo))}`);
   }
 
   function goTo(n: number) {
-    if (n === 7) { setLogos(generateLogos({name,slogan,industry},6)); setSelectedLogo(null); }
+    if (n === 7) { setLogos(generateLogos({name,slogan,industry},24)); setDisplayCount(12); }
     setStep(n);
     window.scrollTo(0,0);
   }
@@ -61,7 +78,7 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-10">
+      <div className={step === 7 ? "max-w-6xl mx-auto px-6 py-10" : "max-w-lg mx-auto px-4 py-10"}>
 
         {step===1 && (
           <div className="flex flex-col gap-8">
@@ -207,18 +224,31 @@ export default function GeneratePage() {
               </div>
               <div className="flex gap-2 text-xs text-gray-400">
                 <span className="cursor-pointer border border-gray-200 px-3 py-1.5 rounded-lg" onClick={()=>goTo(7)}>↺ Symbols</span>
-                <span className="cursor-pointer border border-gray-200 px-3 py-1.5 rounded-lg" onClick={()=>{setLogos(generateLogos({name,slogan,industry},6));setSelectedLogo(null);}}>↺ Layouts</span>
+                <span className="cursor-pointer border border-gray-200 px-3 py-1.5 rounded-lg" onClick={()=>{setLogos(generateLogos({name,slogan,industry},12));setDisplayCount(12);setSelectedLogo(null);}}>↺ Layouts</span>
               </div>
             </div>
-            <p className="text-xs text-gray-400">Click a design to preview and see different versions</p>
-            <div className="grid grid-cols-3 gap-3">
-              {logos.map((logo,i)=>(
-                <LogoView key={i} logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
+            <p className="text-xs text-gray-400">Pick a design and customize it</p>
+            <div className="grid grid-cols-3 gap-6 w-full">
+              {logos.slice(0, displayCount).map((logo,i)=>(
+                <div key={i} className="flex flex-col gap-3">
+                  <div style={{ height: "220px", borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                    <LogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
+                  </div>
+                  <button onClick={()=>goToEditor(i)} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                    Customize
+                  </button>
+                </div>
               ))}
             </div>
-            <button onClick={goToEditor} disabled={selectedLogo === null}
-              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-40">
-              {selectedLogo === null ? "Select a logo first" : "Start customising →"}
+            {displayCount < logos.length && (
+              <div ref={loadMoreRef} className="flex justify-center py-8">
+                <button onClick={() => setDisplayCount(prev => prev + 12)} className="border border-gray-200 text-gray-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                  Load more logos
+                </button>
+              </div>
+            )}
+            <button onClick={()=>{setLogos(generateLogos({name,slogan,industry},24)); setDisplayCount(12);}} className="w-full border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+              ↺ Regenerate Designs
             </button>
           </div>
         )}

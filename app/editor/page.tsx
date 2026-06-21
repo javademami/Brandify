@@ -3,13 +3,10 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Suspense } from "react";
 import type { LogoConfig } from "@/lib/generator";
-import MockupPreview from "@/components/MockupPreview";
-import BrandKit from "@/components/BrandKit";
-import DownloadPackage from "@/components/DownloadPackage";
+import DownloadTab from "@/components/Downloadtab";
 
-// ── inline LogoPreview (نیاز به فایل جدا نداریم) ──
 function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) {
-  const { name, slogan, iconPath, palette, layout, font, fontWeight, borderRadius, textColor, iconColor } = logo;
+  const { name, slogan, iconPath, palette, layout, font, fontWeight, textColor, iconColor } = logo;
   const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
   const iconSize = layout === "iconBig" ? 64 : layout === "badge" ? 32 : 48;
 
@@ -41,16 +38,7 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
   };
 
   return (
-    <div style={{
-      background: palette.bg,
-      borderRadius,
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "2rem",
-    }}>
+    <div style={{ background: palette.bg, borderRadius: "12px", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
       {inner()}
     </div>
   );
@@ -62,7 +50,6 @@ const FONTS = [
   { label: "Montserrat", value: "'Montserrat', sans-serif" },
   { label: "Playfair Display", value: "'Playfair Display', serif" },
   { label: "Outfit", value: "'Outfit', sans-serif" },
-  { label: "Cormorant", value: "'Cormorant Garamond', serif" },
 ];
 
 const LAYOUTS = [
@@ -86,9 +73,8 @@ function EditorInner() {
   const router = useRouter();
   const previewRef = useRef<HTMLDivElement>(null);
   const [logo, setLogo] = useState<LogoConfig | null>(null);
-  const [downloading, setDownloading] = useState(false);
   const [paid, setPaid] = useState(false);
-  const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "mockup">("colors");
+  const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "brand" | "downloads">("colors");
 
   useEffect(() => {
     const data = params.get("data");
@@ -105,34 +91,10 @@ function EditorInner() {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: 16 }}>
       <p style={{ color: "#6b7280", fontSize: 15 }}>No logo selected.</p>
       <button onClick={() => router.push("/generate")} style={{ background: "#4f46e5", color: "white", border: "none", borderRadius: 10, padding: "10px 24px", cursor: "pointer", fontSize: 14 }}>
-        ← Go back to generator
+        ← Go back
       </button>
     </div>
   );
-
-async function downloadPNG() {
-  if (!previewRef.current || !paid || !logo) return;
-
-  setDownloading(true);
-
-  try {
-    const { toPng } = await import("html-to-image");
-
-    const dataUrl = await toPng(previewRef.current, {
-      pixelRatio: 4,
-      backgroundColor: logo?.palette?.bg || "#ffffff",
-    });
-
-    const a = document.createElement("a");
-    a.download = `${logo.name}-logo.png`;
-    a.href = dataUrl;
-    a.click();
-  } catch (e) {
-    console.error(e);
-  }
-
-  setDownloading(false);
-}
 
 
   const update = (patch: Partial<LogoConfig>) => setLogo(prev => prev ? { ...prev, ...patch } : prev);
@@ -142,36 +104,26 @@ async function downloadPNG() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "#f8f8f8" }}>
 
-      {/* ── Navbar ── */}
       <div style={{ height: 56, background: "white", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1.5rem", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}>
+          <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 13 }}>
             ← Back
           </button>
           <span style={{ fontWeight: 700, fontSize: 16, color: "#111" }}>Brandify</span>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {paid ? (
-            <button onClick={downloadPNG} disabled={downloading} style={{ background: "#16a34a", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              {downloading ? "Downloading..." : "⬇ Download PNG"}
-            </button>
-          ) : (
-            <button onClick={() => setPaid(true)} style={{ background: "#4f46e5", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Unlock Download — $5
-            </button>
-          )}
+        <div>
+          <button onClick={() => setActiveTab("downloads")} style={{ background: "#4f46e5", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            ⬇ Downloads
+          </button>
         </div>
       </div>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
-        {/* ── Preview ── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", gap: 24 }}>
           <div ref={previewRef} style={{ width: 480, height: 240, borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
             <LogoPreview logo={logo} />
           </div>
-
-          {/* 3 size previews */}
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             {[0.4, 0.25, 0.15].map((s, i) => (
               <div key={i} style={{ borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", flexShrink: 0, width: 480 * s, height: 240 * s }}>
@@ -182,14 +134,12 @@ async function downloadPNG() {
           <p style={{ fontSize: 12, color: "#9ca3af" }}>Preview at different sizes</p>
         </div>
 
-        {/* ── Controls Panel ── */}
-        <div style={{ width: 300, background: "white", borderLeft: "1px solid #f0f0f0", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ width: 320, background: "white", borderLeft: "1px solid #f0f0f0", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-          {/* Tabs */}
           <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0" }}>
-            {(["colors", "typography", "layout", "mockup"] as const).map(tab => (
+            {(["colors", "typography", "layout", "brand", "downloads"] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                flex: 1, padding: "12px 0", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", textTransform: "capitalize",
+                flex: 1, padding: "12px 0", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", textTransform: "capitalize",
                 background: activeTab === tab ? "white" : "#f9fafb",
                 color: activeTab === tab ? "#4f46e5" : "#6b7280",
                 borderBottom: activeTab === tab ? "2px solid #4f46e5" : "2px solid transparent",
@@ -201,40 +151,38 @@ async function downloadPNG() {
 
           <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem" }}>
 
-            {/* ── Colors tab ── */}
             {activeTab === "colors" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Background</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Background</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="color" value={logo.palette.bg} onChange={e => updatePalette({ bg: e.target.value })}
-                      style={{ width: 40, height: 40, borderRadius: 8, border: "1px solid #e5e7eb", cursor: "pointer", padding: 2 }} />
-                    <span style={{ fontSize: 13, color: "#6b7280", fontFamily: "monospace" }}>{logo.palette.bg}</span>
+                      style={{ width: 40, height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
+                    <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "monospace" }}>{logo.palette.bg}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Text Color</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Text Color</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="color" value={logo.textColor} onChange={e => update({ textColor: e.target.value })}
-                      style={{ width: 40, height: 40, borderRadius: 8, border: "1px solid #e5e7eb", cursor: "pointer", padding: 2 }} />
-                    <span style={{ fontSize: 13, color: "#6b7280", fontFamily: "monospace" }}>{logo.textColor}</span>
+                      style={{ width: 40, height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
+                    <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "monospace" }}>{logo.textColor}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Icon Color</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Icon Color</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="color" value={logo.iconColor === "#ffffff" ? "#ffffff" : logo.iconColor}
                       onChange={e => update({ iconColor: e.target.value })}
-                      style={{ width: 40, height: 40, borderRadius: 8, border: "1px solid #e5e7eb", cursor: "pointer", padding: 2 }} />
-                    <span style={{ fontSize: 13, color: "#6b7280", fontFamily: "monospace" }}>{logo.iconColor}</span>
+                      style={{ width: 40, height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
+                    <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "monospace" }}>{logo.iconColor}</span>
                   </div>
                 </div>
 
-                {/* Quick palettes */}
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Quick Palettes</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Quick Palettes</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                     {[
                       { bg: "#000000", text: "#D4AF37", icon: "#D4AF37" },
@@ -247,9 +195,7 @@ async function downloadPNG() {
                       { bg: "#7c3aed", text: "#f9a8d4", icon: "#ffffff" },
                     ].map((p, i) => (
                       <div key={i} onClick={() => { updatePalette({ bg: p.bg }); update({ textColor: p.text, iconColor: p.icon }); }}
-                        style={{ height: 32, borderRadius: 6, background: p.bg, border: "2px solid #e5e7eb", cursor: "pointer", transition: "transform 0.15s" }}
-                        onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1)")}
-                        onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+                        style={{ height: 32, borderRadius: 6, background: p.bg, border: "2px solid #e5e7eb", cursor: "pointer" }}
                       />
                     ))}
                   </div>
@@ -257,17 +203,16 @@ async function downloadPNG() {
               </div>
             )}
 
-            {/* ── Typography tab ── */}
             {activeTab === "typography" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Font</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Font</label>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {FONTS.map(f => (
                       <button key={f.value} onClick={() => update({ font: f.value })} style={{
-                        padding: "10px 14px", borderRadius: 8, border: logo.font === f.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                        padding: "8px 12px", borderRadius: 6, border: logo.font === f.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
                         background: logo.font === f.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
-                        fontFamily: f.value, fontSize: 15, color: logo.font === f.value ? "#4338ca" : "#374151",
+                        fontFamily: f.value, fontSize: 13, color: logo.font === f.value ? "#4338ca" : "#374151", fontWeight: 500,
                       }}>
                         {f.label}
                       </button>
@@ -276,13 +221,13 @@ async function downloadPNG() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Font Weight</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Font Weight</label>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {["400", "500", "600", "700", "800", "900"].map(w => (
+                    {["400", "500", "600", "700", "800"].map(w => (
                       <button key={w} onClick={() => update({ fontWeight: w })} style={{
-                        padding: "6px 12px", borderRadius: 6, border: logo.fontWeight === w ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
-                        background: logo.fontWeight === w ? "#eef2ff" : "white", cursor: "pointer", fontSize: 13,
-                        fontWeight: w as any, color: logo.fontWeight === w ? "#4338ca" : "#374151",
+                        padding: "6px 10px", borderRadius: 6, border: logo.fontWeight === w ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                        background: logo.fontWeight === w ? "#eef2ff" : "white", cursor: "pointer", fontSize: 12,
+                        fontWeight: w as any, color: logo.fontWeight === w ? "#4338ca" : "#6b7280",
                       }}>
                         {w}
                       </button>
@@ -292,17 +237,16 @@ async function downloadPNG() {
               </div>
             )}
 
-            {/* ── Layout tab ── */}
             {activeTab === "layout" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Layout</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Layout</label>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {LAYOUTS.map(l => (
                       <button key={l.value} onClick={() => update({ layout: l.value as any })} style={{
-                        padding: "10px 14px", borderRadius: 8, border: logo.layout === l.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                        padding: "8px 12px", borderRadius: 6, border: logo.layout === l.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
                         background: logo.layout === l.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
-                        fontSize: 13, color: logo.layout === l.value ? "#4338ca" : "#374151", fontWeight: logo.layout === l.value ? 600 : 400,
+                        fontSize: 13, color: logo.layout === l.value ? "#4338ca" : "#374151", fontWeight: logo.layout === l.value ? 600 : 500,
                       }}>
                         {l.label}
                       </button>
@@ -311,13 +255,13 @@ async function downloadPNG() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Border Radius</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Border Radius</label>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {RADII.map(r => (
                       <button key={r.value} onClick={() => update({ borderRadius: r.value })} style={{
-                        padding: "6px 12px", borderRadius: 6, border: logo.borderRadius === r.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                        padding: "6px 10px", borderRadius: 6, border: logo.borderRadius === r.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
                         background: logo.borderRadius === r.value ? "#eef2ff" : "white", cursor: "pointer",
-                        fontSize: 12, color: logo.borderRadius === r.value ? "#4338ca" : "#374151",
+                        fontSize: 12, color: logo.borderRadius === r.value ? "#4338ca" : "#6b7280",
                       }}>
                         {r.label}
                       </button>
@@ -327,9 +271,39 @@ async function downloadPNG() {
               </div>
             )}
 
-            {/* ── Mockup tab ── */}
-            {activeTab === "mockup" && (
-              <MockupPreview logo={logo} />
+            {activeTab === "brand" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Brand Colors</p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[
+                      { color: logo.palette.bg, label: "Primary" },
+                      { color: logo.textColor, label: "Text" },
+                      { color: logo.iconColor, label: "Icon" },
+                    ].map((c, i) => (
+                      <div key={i} style={{ flex: 1 }}>
+                        <div style={{ height: 48, borderRadius: 6, background: c.color, border: "1px solid #e5e7eb", marginBottom: 6, cursor: "pointer" }}
+                          onClick={() => navigator.clipboard.writeText(c.color)} />
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#374151" }}>{c.label}</div>
+                        <div style={{ fontSize: 9, color: "#9ca3af", fontFamily: "monospace" }}>{c.color}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Typography</p>
+                  <div style={{ background: "#f9fafb", borderRadius: 8, padding: "0.75rem", border: "1px solid #f0f0f0" }}>
+                    <div style={{ fontFamily: logo.font, fontWeight: logo.fontWeight as any, fontSize: 18, color: "#111", marginBottom: 3 }}>{logo.name}</div>
+                    <div style={{ fontFamily: logo.font, fontWeight: "400", fontSize: 12, color: "#6b7280" }}>The quick brown fox</div>
+                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>Weight: {logo.fontWeight}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "downloads" && (
+              <DownloadTab logo={logo} previewRef={previewRef} paid={paid} onUnlock={() => setPaid(true)} />
             )}
 
           </div>
