@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 
 interface DownloadTabProps {
   logo: LogoConfig;
-  previewRef: React.RefObject<HTMLDivElement>;
+  previewRef: React.RefObject<HTMLDivElement | null>;
   paid: boolean;
   onUnlock: () => void;
 }
