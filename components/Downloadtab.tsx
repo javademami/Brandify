@@ -10,7 +10,7 @@ interface DownloadTabProps {
   onUnlock: () => void;
 }
 
-async function downloadPNG(logo: LogoConfig, previewRef: React.RefObject<HTMLDivElement>, size: number, label: string) {
+async function downloadPNG(logo: LogoConfig, previewRef: React.RefObject<HTMLDivElement | null>, size: number, label: string) {
   if (!previewRef.current) return;
   const { toPng } = await import("html-to-image");
   const dataUrl = await toPng(previewRef.current, { pixelRatio: size / 480, backgroundColor: logo.palette.bg });
@@ -51,7 +51,7 @@ async function downloadSVG(logo: LogoConfig) {
   URL.revokeObjectURL(url);
 }
 
-async function downloadFavicon(logo: LogoConfig, previewRef: React.RefObject<HTMLDivElement>) {
+async function downloadFavicon(logo: LogoConfig, previewRef: React.RefObject<HTMLDivElement | null>) {
   if (!previewRef.current) return;
   const { toPng } = await import("html-to-image");
   const dataUrl = await toPng(previewRef.current, { pixelRatio: 32 / 480, backgroundColor: logo.palette.bg });
@@ -142,4 +142,3 @@ export default function DownloadTab({ logo, previewRef, paid, onUnlock }: Downlo
     </div>
   );
 }
-// force update for vercel build
