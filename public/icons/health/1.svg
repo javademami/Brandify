@@ -1,12 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
-  <defs>
-    <linearGradient id="health1" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#ec4899" />
-      <stop offset="100%" stop-color="#8b5cf6" />
-    </linearGradient>
-  </defs>
-  <g fill="none" stroke="url(#health1)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M50 82C50 82 18 60 18 38C18 22 30 14 42 20C46 22 50 26 50 26C50 26 54 22 58 20C70 14 82 22 82 38C82 60 50 82 50 82Z" fill="url(#health1)" fill-opacity="0.1" />
-    <path d="M30 42h10l5-12l5 24l5-16l5 4h10" stroke-width="4.5" />
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <g fill="none" fill-rule="evenodd">
+    <path stroke="#979797" stroke-linecap="round" stroke-width="4" d="M32,9 C19.2974508,9 9,19.2974508 9,32 C9,44.7025492 19.2974508,55 32,55 L32,55 C44.7025492,55 55,44.7025492 55,32" transform="rotate(45 32 32)"/>
+    <circle cx="9" cy="32" r="7" fill="#FCC24C"/>
+    <circle cx="51" cy="19" r="4" fill="#FCC24C"/>
+    <circle cx="19" cy="13" r="4" fill="#FCC24C"/>
+    <circle cx="19" cy="51" r="4" fill="#FCC24C"/>
+    <circle cx="51" cy="46" r="4" fill="#FCC24C"/>
   </g>
 </svg>

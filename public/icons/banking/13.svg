@@ -1,0 +1,54 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 116 180" width="116" height="180">
+	<defs>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(80.275,0,0,114.4,2.729,1.581)">
+			<stop offset="0" stop-color="#a57d24"/>
+			<stop offset=".154" stop-color="#cbad52"/>
+			<stop offset=".328" stop-color="#f1dd80"/>
+			<stop offset=".524" stop-color="#fbf2a8"/>
+			<stop offset=".73" stop-color="#f1dd80"/>
+			<stop offset="1" stop-color="#a57d24"/>
+		</linearGradient>
+		<linearGradient id="g2" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(80.275,0,0,114.4,2.729,69.609)">
+			<stop offset="0" stop-color="#a57d24"/>
+			<stop offset=".154" stop-color="#cbad52"/>
+			<stop offset=".328" stop-color="#f1dd80"/>
+			<stop offset=".524" stop-color="#fbf2a8"/>
+			<stop offset=".73" stop-color="#f1dd80"/>
+			<stop offset="1" stop-color="#a57d24"/>
+		</linearGradient>
+		<linearGradient id="g3" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(80.275,0,0,114.4,36.644,1.581)">
+			<stop offset="0" stop-color="#a57d24"/>
+			<stop offset=".154" stop-color="#cbad52"/>
+			<stop offset=".328" stop-color="#f1dd80"/>
+			<stop offset=".524" stop-color="#fbf2a8"/>
+			<stop offset=".73" stop-color="#f1dd80"/>
+			<stop offset="1" stop-color="#a57d24"/>
+		</linearGradient>
+		<linearGradient id="g4" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(80.275,0,0,114.4,36.644,69.609)">
+			<stop offset="0" stop-color="#a57d24"/>
+			<stop offset=".154" stop-color="#cbad52"/>
+			<stop offset=".328" stop-color="#f1dd80"/>
+			<stop offset=".524" stop-color="#fbf2a8"/>
+			<stop offset=".73" stop-color="#f1dd80"/>
+			<stop offset="1" stop-color="#a57d24"/>
+		</linearGradient>
+	</defs>
+	<style>
+		.s0 { fill: url(#g1) } 
+		.s1 { fill: url(#g2) } 
+		.s2 { fill: url(#g3) } 
+		.s3 { fill: url(#g4) } 
+	</style>
+	<g id="&lt;Group&gt;">
+		<g id="&lt;Group&gt;">
+			<g id="&lt;Group&gt;">
+				<path id="&lt;Path&gt;" class="s0" d="m83 1.58v34.13l-80.27 80.27v-34.12z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m83 69.61v34.12l-80.27 80.28v-34.13z"/>
+			</g>
+			<g id="&lt;Group&gt;">
+				<path id="&lt;Path&gt;" class="s2" d="m116.92 1.58v34.13l-80.28 80.27v-34.12z"/>
+				<path id="&lt;Path&gt;" class="s3" d="m116.92 69.61v34.12l-80.28 80.28v-34.13z"/>
+			</g>
+		</g>
+	</g>
+</svg>

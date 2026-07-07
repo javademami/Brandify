@@ -6,49 +6,75 @@ import type { LogoConfig } from "@/lib/generator";
 import DownloadTab from "@/components/Downloadtab";
 
 function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) {
-  const { name, slogan, iconPath, palette, layout, font, fontWeight, textColor, iconColor } = logo;
-  const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
-  const iconSize = layout === "iconBig" ? 64 : layout === "badge" ? 32 : 48;
+  const { name, slogan, iconPath, palette, layout, font, fontSize, fontWeight, textColor, background, effect } = logo;
+  const iconSize = layout === "iconBig" ? 72 : layout === "badge" ? 48 : 60;
+  const bgStyle = background?.includes("linear") ? { background } : { background: background || palette.bg };
+
+  const effectStyles: Record<string, React.CSSProperties> = {
+    none: {},
+    glow: { boxShadow: `0 0 30px ${textColor}44, inset 0 0 20px ${textColor}22` },
+    metallic: { boxShadow: "0 8px 20px rgba(212, 175, 55, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.2)" },
+    shadow: { boxShadow: "0 12px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.2)" },
+    neon: { boxShadow: `0 0 20px ${textColor}66, 0 0 40px ${textColor}33`, textShadow: `0 0 10px ${textColor}99` },
+  };
+
+  const textStyle: React.CSSProperties = effect === "neon" ? { textShadow: `0 0 8px ${textColor}88, 0 0 15px ${textColor}55` } : {};
 
   const inner = () => {
     if (layout === "textOnly") return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-        <span style={{ fontFamily: font, fontWeight, fontSize: 32 * scale, color: textColor, letterSpacing: "0.04em" }}>{name}</span>
-        {slogan && <span style={{ fontFamily: font, fontSize: 13 * scale, color: textColor, opacity: 0.7, letterSpacing: "0.12em" }}>{slogan.toUpperCase()}</span>}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
+        <span style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 6) * scale, color: textColor, letterSpacing: "0.02em", ...textStyle }}>{name}</span>
+        {slogan && <span style={{ fontFamily: font, fontSize: 12 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</span>}
       </div>
     );
-    if (layout === "iconLeft" || layout === "badge") return (
-      <div style={{ display: "flex", alignItems: "center", gap: 18 * scale }}>
-        <img src={iconPath} width={iconSize * scale} height={iconSize * scale} style={{ filter: iconFilter }} alt="" />
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontFamily: font, fontWeight, fontSize: (layout === "badge" ? 20 : 26) * scale, color: textColor }}>{name}</span>
-          {slogan && layout !== "badge" && <span style={{ fontFamily: font, fontSize: 12 * scale, color: textColor, opacity: 0.65, letterSpacing: "0.1em" }}>{slogan.toUpperCase()}</span>}
+    if (layout === "horizontalBar") return (
+      <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 14 * scale }}>
+        <img src={iconPath} width={48 * scale} height={48 * scale} alt="" />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</div>
+          {slogan && <div style={{ fontFamily: font, fontSize: 10 * scale, color: textColor, opacity: 0.6 }}>{slogan}</div>}
+        </div>
+      </div>
+    );
+    if (layout === "badge") return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10 * scale }}>
+        <img src={iconPath} width={iconSize * scale} height={iconSize * scale} alt="" />
+        <span style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</span>
+      </div>
+    );
+    if (layout === "iconLeft") return (
+      <div style={{ display: "flex", alignItems: "center", gap: 14 * scale }}>
+        <img src={iconPath} width={iconSize * scale} height={iconSize * scale} alt="" />
+        <div>
+          <div style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</div>
+          {slogan && <div style={{ fontFamily: font, fontSize: 11 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</div>}
         </div>
       </div>
     );
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 * scale }}>
-        <img src={iconPath} width={iconSize * scale} height={iconSize * scale} style={{ filter: iconFilter }} alt="" />
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <span style={{ fontFamily: font, fontWeight, fontSize: (layout === "iconBig" ? 26 : 22) * scale, color: textColor, letterSpacing: "0.04em" }}>{name}</span>
-          {slogan && <span style={{ fontFamily: font, fontSize: 12 * scale, color: textColor, opacity: 0.65, letterSpacing: "0.12em" }}>{slogan.toUpperCase()}</span>}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 * scale }}>
+        <img src={iconPath} width={iconSize * scale} height={iconSize * scale} alt="" />
+        <div style={{ textAlign: "center" }}>
+          <span style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</span>
+          {slogan && <div style={{ fontFamily: font, fontSize: 11 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</div>}
         </div>
       </div>
     );
   };
 
   return (
-    <div style={{ background: palette.bg, borderRadius: "12px", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+    <div style={{ ...bgStyle, borderRadius: logo.borderRadius, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", ...effectStyles[effect] }}>
       {inner()}
     </div>
   );
 }
 
 const FONTS = [
+  { label: "Playfair", value: "'Playfair Display', serif" },
+  { label: "Montserrat", value: "'Montserrat', sans-serif" },
   { label: "DM Sans", value: "'DM Sans', sans-serif" },
   { label: "Poppins", value: "'Poppins', sans-serif" },
-  { label: "Montserrat", value: "'Montserrat', sans-serif" },
-  { label: "Playfair Display", value: "'Playfair Display', serif" },
+  { label: "Cormorant", value: "'Cormorant Garamond', serif" },
   { label: "Outfit", value: "'Outfit', sans-serif" },
 ];
 
@@ -58,6 +84,7 @@ const LAYOUTS = [
   { label: "Icon Big", value: "iconBig" },
   { label: "Badge", value: "badge" },
   { label: "Text Only", value: "textOnly" },
+  { label: "Horizontal", value: "horizontalBar" },
 ];
 
 const RADII = [
@@ -68,13 +95,21 @@ const RADII = [
   { label: "Pill", value: "999px" },
 ];
 
+const EFFECTS = [
+  { label: "None", value: "none" },
+  { label: "Glow", value: "glow" },
+  { label: "Metallic", value: "metallic" },
+  { label: "Shadow", value: "shadow" },
+  { label: "Neon", value: "neon" },
+];
+
 function EditorInner() {
   const params = useSearchParams();
   const router = useRouter();
   const previewRef = useRef<HTMLDivElement>(null);
   const [logo, setLogo] = useState<LogoConfig | null>(null);
   const [paid, setPaid] = useState(false);
-  const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "brand" | "downloads">("colors");
+  const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "effects" | "brand" | "downloads">("colors");
 
   useEffect(() => {
     const data = params.get("data");
@@ -96,10 +131,7 @@ function EditorInner() {
     </div>
   );
 
-
   const update = (patch: Partial<LogoConfig>) => setLogo(prev => prev ? { ...prev, ...patch } : prev);
-  const updatePalette = (patch: Partial<LogoConfig["palette"]>) =>
-    setLogo(prev => prev ? { ...prev, palette: { ...prev.palette, ...patch } } : prev);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "#f8f8f8" }}>
@@ -109,13 +141,11 @@ function EditorInner() {
           <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 13 }}>
             ← Back
           </button>
-          <span style={{ fontWeight: 700, fontSize: 16, color: "#111" }}>Brandify</span>
+          <span style={{ fontWeight: 700, fontSize: 16, color: "#111" }}>Brandify Editor</span>
         </div>
-        <div>
-          <button onClick={() => setActiveTab("downloads")} style={{ background: "#4f46e5", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-            ⬇ Downloads
-          </button>
-        </div>
+        <button onClick={() => setActiveTab("downloads")} style={{ background: "#4f46e5", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          ⬇ Downloads
+        </button>
       </div>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -136,10 +166,10 @@ function EditorInner() {
 
         <div style={{ width: 320, background: "white", borderLeft: "1px solid #f0f0f0", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-          <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0" }}>
-            {(["colors", "typography", "layout", "brand", "downloads"] as const).map(tab => (
+          <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0", flexWrap: "wrap" }}>
+            {(["colors", "typography", "layout", "effects", "brand", "downloads"] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                flex: 1, padding: "12px 0", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", textTransform: "capitalize",
+                flex: 1, minWidth: 55, padding: "10px 0", fontSize: 10, fontWeight: 600, border: "none", cursor: "pointer", textTransform: "capitalize",
                 background: activeTab === tab ? "white" : "#f9fafb",
                 color: activeTab === tab ? "#4f46e5" : "#6b7280",
                 borderBottom: activeTab === tab ? "2px solid #4f46e5" : "2px solid transparent",
@@ -152,49 +182,33 @@ function EditorInner() {
           <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem" }}>
 
             {activeTab === "colors" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Background</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="color" value={logo.palette.bg} onChange={e => updatePalette({ bg: e.target.value })}
-                      style={{ width: 40, height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
-                    <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "monospace" }}>{logo.palette.bg}</span>
-                  </div>
+                  <input type="color" value={logo.background?.includes("linear") ? logo.palette.bg : (logo.background || logo.palette.bg)} onChange={e => update({ background: e.target.value })}
+                    style={{ width: "100%", height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
                 </div>
 
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Text Color</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="color" value={logo.textColor} onChange={e => update({ textColor: e.target.value })}
-                      style={{ width: 40, height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
-                    <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "monospace" }}>{logo.textColor}</span>
-                  </div>
+                  <input type="color" value={logo.textColor} onChange={e => update({ textColor: e.target.value })}
+                    style={{ width: "100%", height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Icon Color</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="color" value={logo.iconColor === "#ffffff" ? "#ffffff" : logo.iconColor}
-                      onChange={e => update({ iconColor: e.target.value })}
-                      style={{ width: 40, height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
-                    <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "monospace" }}>{logo.iconColor}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Quick Palettes</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Quick Colors</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                     {[
-                      { bg: "#000000", text: "#D4AF37", icon: "#D4AF37" },
-                      { bg: "#0f172a", text: "#3b82f6", icon: "#ffffff" },
-                      { bg: "#ffffff", text: "#111111", icon: "#111111" },
-                      { bg: "#1e3a8a", text: "#ffffff", icon: "#ffffff" },
-                      { bg: "#dc2626", text: "#ffffff", icon: "#ffffff" },
-                      { bg: "#065f46", text: "#6ee7b7", icon: "#ffffff" },
-                      { bg: "#4f46e5", text: "#ffffff", icon: "#ffffff" },
-                      { bg: "#7c3aed", text: "#f9a8d4", icon: "#ffffff" },
+                      { bg: "#000000", text: "#D4AF37" },
+                      { bg: "#0f172a", text: "#3b82f6" },
+                      { bg: "#ffffff", text: "#111111" },
+                      { bg: "#dc2626", text: "#ffffff" },
+                      { bg: "#065f46", text: "#6ee7b7" },
+                      { bg: "#4f46e5", text: "#ffffff" },
+                      { bg: "#1e3a8a", text: "#ffffff" },
+                      { bg: "#7c3aed", text: "#f9a8d4" },
                     ].map((p, i) => (
-                      <div key={i} onClick={() => { updatePalette({ bg: p.bg }); update({ textColor: p.text, iconColor: p.icon }); }}
+                      <div key={i} onClick={() => { update({ background: p.bg, textColor: p.text }); }}
                         style={{ height: 32, borderRadius: 6, background: p.bg, border: "2px solid #e5e7eb", cursor: "pointer" }}
                       />
                     ))}
@@ -204,7 +218,7 @@ function EditorInner() {
             )}
 
             {activeTab === "typography" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Font</label>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -212,7 +226,7 @@ function EditorInner() {
                       <button key={f.value} onClick={() => update({ font: f.value })} style={{
                         padding: "8px 12px", borderRadius: 6, border: logo.font === f.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
                         background: logo.font === f.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
-                        fontFamily: f.value, fontSize: 13, color: logo.font === f.value ? "#4338ca" : "#374151", fontWeight: 500,
+                        fontFamily: f.value, fontSize: 12, color: logo.font === f.value ? "#4338ca" : "#374151",
                       }}>
                         {f.label}
                       </button>
@@ -223,10 +237,10 @@ function EditorInner() {
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Font Weight</label>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {["400", "500", "600", "700", "800"].map(w => (
+                    {["400", "600", "700", "800", "900"].map(w => (
                       <button key={w} onClick={() => update({ fontWeight: w })} style={{
                         padding: "6px 10px", borderRadius: 6, border: logo.fontWeight === w ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
-                        background: logo.fontWeight === w ? "#eef2ff" : "white", cursor: "pointer", fontSize: 12,
+                        background: logo.fontWeight === w ? "#eef2ff" : "white", cursor: "pointer", fontSize: 11,
                         fontWeight: w as any, color: logo.fontWeight === w ? "#4338ca" : "#6b7280",
                       }}>
                         {w}
@@ -234,19 +248,25 @@ function EditorInner() {
                     ))}
                   </div>
                 </div>
+
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Size</label>
+                  <input type="range" min="16" max="28" value={logo.fontSize} onChange={e => update({ fontSize: parseInt(e.target.value) })}
+                    style={{ width: "100%", cursor: "pointer" }} />
+                  <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{logo.fontSize}px</div>
+                </div>
               </div>
             )}
 
             {activeTab === "layout" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Layout</label>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {LAYOUTS.map(l => (
                       <button key={l.value} onClick={() => update({ layout: l.value as any })} style={{
-                        padding: "8px 12px", borderRadius: 6, border: logo.layout === l.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                        padding: "10px 12px", borderRadius: 6, border: logo.layout === l.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
                         background: logo.layout === l.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
-                        fontSize: 13, color: logo.layout === l.value ? "#4338ca" : "#374151", fontWeight: logo.layout === l.value ? 600 : 500,
+                        fontSize: 12, color: logo.layout === l.value ? "#4338ca" : "#374151", fontWeight: logo.layout === l.value ? 600 : 500,
                       }}>
                         {l.label}
                       </button>
@@ -255,13 +275,13 @@ function EditorInner() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Border Radius</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Radius</label>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {RADII.map(r => (
                       <button key={r.value} onClick={() => update({ borderRadius: r.value })} style={{
                         padding: "6px 10px", borderRadius: 6, border: logo.borderRadius === r.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
                         background: logo.borderRadius === r.value ? "#eef2ff" : "white", cursor: "pointer",
-                        fontSize: 12, color: logo.borderRadius === r.value ? "#4338ca" : "#6b7280",
+                        fontSize: 11, color: logo.borderRadius === r.value ? "#4338ca" : "#6b7280",
                       }}>
                         {r.label}
                       </button>
@@ -271,34 +291,30 @@ function EditorInner() {
               </div>
             )}
 
-            {activeTab === "brand" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Brand Colors</p>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    {[
-                      { color: logo.palette.bg, label: "Primary" },
-                      { color: logo.textColor, label: "Text" },
-                      { color: logo.iconColor, label: "Icon" },
-                    ].map((c, i) => (
-                      <div key={i} style={{ flex: 1 }}>
-                        <div style={{ height: 48, borderRadius: 6, background: c.color, border: "1px solid #e5e7eb", marginBottom: 6, cursor: "pointer" }}
-                          onClick={() => navigator.clipboard.writeText(c.color)} />
-                        <div style={{ fontSize: 10, fontWeight: 600, color: "#374151" }}>{c.label}</div>
-                        <div style={{ fontSize: 9, color: "#9ca3af", fontFamily: "monospace" }}>{c.color}</div>
-                      </div>
-                    ))}
-                  </div>
+            {activeTab === "effects" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {EFFECTS.map(e => (
+                    <button key={e.value} onClick={() => update({ effect: e.value as any })} style={{
+                      padding: "10px 12px", borderRadius: 6, border: logo.effect === e.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                      background: logo.effect === e.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
+                      fontSize: 12, color: logo.effect === e.value ? "#4338ca" : "#374151", fontWeight: logo.effect === e.value ? 600 : 500,
+                    }}>
+                      {e.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
+            )}
 
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Typography</p>
-                  <div style={{ background: "#f9fafb", borderRadius: 8, padding: "0.75rem", border: "1px solid #f0f0f0" }}>
-                    <div style={{ fontFamily: logo.font, fontWeight: logo.fontWeight as any, fontSize: 18, color: "#111", marginBottom: 3 }}>{logo.name}</div>
-                    <div style={{ fontFamily: logo.font, fontWeight: "400", fontSize: 12, color: "#6b7280" }}>The quick brown fox</div>
-                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>Weight: {logo.fontWeight}</div>
-                  </div>
-                </div>
+            {activeTab === "brand" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>Primary</p>
+                <div style={{ height: 48, borderRadius: 6, background: logo.background?.includes("linear") ? logo.palette.bg : (logo.background || logo.palette.bg), border: "1px solid #e5e7eb", cursor: "pointer" }}
+                  onClick={() => navigator.clipboard.writeText(logo.background || logo.palette.bg)} />
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>Text</p>
+                <div style={{ height: 48, borderRadius: 6, background: logo.textColor, border: "1px solid #e5e7eb", cursor: "pointer" }}
+                  onClick={() => navigator.clipboard.writeText(logo.textColor)} />
               </div>
             )}
 

@@ -62,7 +62,7 @@ export default function GeneratePage() {
   }
 
   function goTo(n: number) {
-    if (n === 7) { setLogos(generateLogos({name,slogan,industry},24)); setDisplayCount(12); }
+    if (n === 7) { setLogos(generateLogos({name,slogan,industry},48)); setDisplayCount(12); }
     setStep(n);
     window.scrollTo(0,0);
   }
@@ -224,14 +224,14 @@ export default function GeneratePage() {
               </div>
               <div className="flex gap-2 text-xs text-gray-400">
                 <span className="cursor-pointer border border-gray-200 px-3 py-1.5 rounded-lg" onClick={()=>goTo(7)}>↺ Symbols</span>
-                <span className="cursor-pointer border border-gray-200 px-3 py-1.5 rounded-lg" onClick={()=>{setLogos(generateLogos({name,slogan,industry},12));setDisplayCount(12);setSelectedLogo(null);}}>↺ Layouts</span>
+                <span className="cursor-pointer border border-gray-200 px-3 py-1.5 rounded-lg" onClick={()=>{setLogos(generateLogos({name,slogan,industry},48));setDisplayCount(12);setSelectedLogo(null);}}>↺ Layouts</span>
               </div>
             </div>
             <p className="text-xs text-gray-400">Pick a design and customize it</p>
             <div className="grid grid-cols-3 gap-6 w-full">
               {logos.slice(0, displayCount).map((logo,i)=>(
                 <div key={i} className="flex flex-col gap-3">
-                  <div style={{ height: "220px", borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                  <div style={{ height: "280px", borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
                     <LogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
                   </div>
                   <button onClick={()=>goToEditor(i)} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
@@ -247,7 +247,7 @@ export default function GeneratePage() {
                 </button>
               </div>
             )}
-            <button onClick={()=>{setLogos(generateLogos({name,slogan,industry},24)); setDisplayCount(12);}} className="w-full border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+            <button onClick={()=>{setLogos(generateLogos({name,slogan,industry},48)); setDisplayCount(12);}} className="w-full border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
               ↺ Regenerate Designs
             </button>
           </div>
