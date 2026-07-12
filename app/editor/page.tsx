@@ -6,7 +6,7 @@ import type { LogoConfig } from "@/lib/generator";
 import DownloadTab from "@/components/Downloadtab";
  
 function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) {
-  const { name, slogan, iconPath, palette, layout, font, fontSize, fontWeight, textColor, background, effect } = logo;
+  const { name, slogan, iconPath, palette, layout, font, fontSize, fontWeight, textColor, background, effect } = logo as any;
   const iconSize = layout === "iconBig" ? 72 : layout === "badge" ? 48 : 60;
   const bgStyle = background?.includes("linear") ? { background } : { background: background || palette.bg };
  
