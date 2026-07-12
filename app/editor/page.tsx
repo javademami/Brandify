@@ -107,7 +107,7 @@ function EditorInner() {
   const params = useSearchParams();
   const router = useRouter();
   const previewRef = useRef<HTMLDivElement>(null);
-  const [logo, setLogo] = useState<LogoConfig | null>(null);
+  const [logo, setLogo] = useState<any | null>(null);
   const [paid, setPaid] = useState(false);
   const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "effects" | "brand" | "downloads">("colors");
  
