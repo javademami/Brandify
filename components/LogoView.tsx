@@ -1,12 +1,18 @@
+
 "use client";
 import type { LogoConfig } from "@/lib/generator";
 
 export default function LogoView({ logo, selected, onClick }: {
   logo: LogoConfig; selected?: boolean; onClick?: () => void;
 }) {
-  const { name, slogan, iconPath, layout, font, fontSize, fontWeight, borderRadius, textColor, background, palette, effect, decoration, decorationColor, textDecoration, iconColor } = logo;
+  const { name, slogan, iconPath, layout, fontFamily, fontSize, fontWeight, borderRadius, textColor, background, palette, effect, decoration, decorationColor, textDecoration, iconColor, letterSpacing, textTransform, frameStyle } = logo;
   
-  const bgColor = background?.includes("linear") ? background : (background || palette.bg);
+  // اگر frame داشته باشد، background یک رنگ (بدون gradient)
+  let bgColor = background?.includes("linear") ? background : (background || palette.bg);
+  if (frameStyle !== "none" && background?.includes("linear")) {
+    bgColor = palette.bg; // استفاده از solid color برای frames
+  }
+  
   const iconSize = layout === "iconBig" ? 72 : layout === "badge" ? 48 : 60;
 
   const effectBoxShadow = {
@@ -36,7 +42,6 @@ export default function LogoView({ logo, selected, onClick }: {
   };
 
   const renderLayout = () => {
-    // Text decoration styles
     const getTextDecorationStyle = (): React.CSSProperties => {
       switch(textDecoration) {
         case "underline":
@@ -48,7 +53,6 @@ export default function LogoView({ logo, selected, onClick }: {
       }
     };
 
-    // Calculate icon filter based on iconColor
     const getIconFilter = () => {
       if (iconColor === "#ffffff") {
         return "brightness(0) invert(1)";
@@ -59,45 +63,33 @@ export default function LogoView({ logo, selected, onClick }: {
       }
     };
 
-    const commonTextProps = { fontFamily: font, fontWeight, color: textColor, ...getTextDecorationStyle() };
+    const commonTextProps = { fontFamily, fontWeight, color: textColor, letterSpacing: letterSpacing as any, textTransform: textTransform as any, ...getTextDecorationStyle() };
     const iconStyle = { filter: getIconFilter() };
     
     if (layout === "textOnly") {
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
-          <span style={{ ...commonTextProps, fontSize: fontSize + 6, letterSpacing: "0.02em" }}>{name}</span>
-          {slogan && <span style={{ ...commonTextProps, fontSize: 12, opacity: 0.6 }}>{slogan.toUpperCase()}</span>}
-        </div>
-      );
-    }
-    
-    if (layout === "horizontalBar") {
-      return (
-        <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 14 }}>
-          <img src={iconPath} width={48} height={48} alt="icon" style={{ flexShrink: 0, ...iconStyle }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ ...commonTextProps, fontSize: fontSize + 2 }}>{name}</div>
-            {slogan && <div style={{ ...commonTextProps, fontSize: 10, opacity: 0.6, marginTop: 2 }}>{slogan}</div>}
-          </div>
+          <span style={{ ...commonTextProps, fontSize: fontSize + 10, letterSpacing: "0.02em", fontWeight: "700" }}>{name}</span>
+          {slogan && <span style={{ ...commonTextProps, fontSize: 13, opacity: 0.6 }}>{slogan.toUpperCase()}</span>}
         </div>
       );
     }
     
     if (layout === "badge") {
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />
-          <span style={{ ...commonTextProps, fontSize: fontSize + 2 }}>{name}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: "90%" }}>
+          {iconPath && <img src={iconPath} width={36} height={36} alt="icon" style={iconStyle} />}
+          <span style={{ ...commonTextProps, fontSize: fontSize + 4, fontWeight: "600" }}>{name}</span>
         </div>
       );
     }
     
     if (layout === "iconLeft") {
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {iconPath && <img src={iconPath} width={44} height={44} alt="icon" style={iconStyle} />}
           <div>
-            <div style={{ ...commonTextProps, fontSize: fontSize + 2 }}>{name}</div>
+            <div style={{ ...commonTextProps, fontSize: fontSize + 2, fontWeight: "600" }}>{name}</div>
             {slogan && <div style={{ ...commonTextProps, fontSize: 11, opacity: 0.6, marginTop: 2 }}>{slogan.toUpperCase()}</div>}
           </div>
         </div>
@@ -107,7 +99,7 @@ export default function LogoView({ logo, selected, onClick }: {
     if (layout === "iconBig") {
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />
+          {iconPath && <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />}
           <div style={{ textAlign: "center" }}>
             <span style={{ ...commonTextProps, fontSize: fontSize + 2 }}>{name}</span>
             {slogan && <div style={{ ...commonTextProps, fontSize: 11, opacity: 0.6, marginTop: 2 }}>{slogan.toUpperCase()}</div>}
@@ -116,16 +108,125 @@ export default function LogoView({ logo, selected, onClick }: {
       );
     }
     
-    // default: iconTop
+    // default: iconTop - ICON بالا
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+        {iconPath && <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />}
         <div style={{ textAlign: "center" }}>
-          <span style={{ ...commonTextProps, fontSize: fontSize + 2 }}>{name}</span>
-          {slogan && <div style={{ ...commonTextProps, fontSize: 11, opacity: 0.6, marginTop: 2 }}>{slogan.toUpperCase()}</div>}
+          <span style={{ ...commonTextProps, fontSize: fontSize + 2, fontWeight: "700" }}>{name}</span>
+          {slogan && <div style={{ ...commonTextProps, fontSize: 12, opacity: 0.6, marginTop: 3 }}>{slogan.toUpperCase()}</div>}
         </div>
       </div>
     );
+  };
+
+  // Frame Renderers - کوچکتر، بدون gradient، border بولدتر
+  const renderFrame = () => {
+    const content = renderLayout();
+
+    if (frameStyle === "gold-square") {
+      return (
+        <div style={{
+          background: bgColor,
+          padding: "20px",
+          border: "4px solid rgba(212, 175, 55, 0.7)",
+          borderRadius: "8px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          maxWidth: "220px",
+        }}>
+          {content}
+        </div>
+      );
+    }
+
+    if (frameStyle === "thin-circle") {
+      return (
+        <div style={{
+          background: bgColor,
+          width: "160px",
+          height: "160px",
+          borderRadius: "50%",
+          border: "3px solid rgba(212, 175, 55, 0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "15px",
+        }}>
+          {content}
+        </div>
+      );
+    }
+
+    if (frameStyle === "inner-dashed-circle") {
+      return (
+        <div style={{
+          background: bgColor,
+          width: "160px",
+          height: "160px",
+          borderRadius: "50%",
+          border: "3px solid rgba(212, 175, 55, 0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "15px",
+          position: "relative",
+        }}>
+          <div style={{
+            position: "absolute",
+            inset: "20px",
+            borderRadius: "50%",
+            border: "2px dashed rgba(212, 175, 55, 0.5)",
+            pointerEvents: "none",
+          }} />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            {content}
+          </div>
+        </div>
+      );
+    }
+
+    if (frameStyle === "solid-dark-circle") {
+      return (
+        <div style={{
+          background: "#1a1a1a",
+          width: "160px",
+          height: "160px",
+          borderRadius: "50%",
+          border: "3px solid #666",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "15px",
+        }}>
+          <div style={{ color: "#ffffff" }}>
+            {renderLayout()}
+          </div>
+        </div>
+      );
+    }
+
+    if (frameStyle === "gradient-block") {
+      return (
+        <div style={{
+          background: bgColor,
+          padding: "20px",
+          borderRadius: "8px",
+          border: "4px solid rgba(212, 175, 55, 0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          maxWidth: "220px",
+        }}>
+          <div style={{ color: "#1a1a1a" }}>
+            {renderLayout()}
+          </div>
+        </div>
+      );
+    }
+
+    return content;
   };
 
   return (
@@ -142,7 +243,7 @@ export default function LogoView({ logo, selected, onClick }: {
       transition: "all 0.2s",
       padding: "1.25rem",
       boxSizing: "border-box",
-      boxShadow: effectBoxShadow,
+      boxShadow: frameStyle === "none" ? effectBoxShadow : "none",
       position: "relative",
       overflow: "hidden",
     }}
@@ -152,8 +253,8 @@ export default function LogoView({ logo, selected, onClick }: {
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
       }}>
-      {renderDecoration()}
-      {renderLayout()}
+      {frameStyle === "none" && renderDecoration()}
+      {renderFrame()}
     </div>
   );
 }

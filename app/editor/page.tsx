@@ -1,15 +1,15 @@
 "use client";
-
+ 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Suspense } from "react";
 import type { LogoConfig } from "@/lib/generator";
 import DownloadTab from "@/components/Downloadtab";
-
+ 
 function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) {
   const { name, slogan, iconPath, palette, layout, font, fontSize, fontWeight, textColor, background, effect } = logo;
   const iconSize = layout === "iconBig" ? 72 : layout === "badge" ? 48 : 60;
   const bgStyle = background?.includes("linear") ? { background } : { background: background || palette.bg };
-
+ 
   const effectStyles: Record<string, React.CSSProperties> = {
     none: {},
     glow: { boxShadow: `0 0 30px ${textColor}44, inset 0 0 20px ${textColor}22` },
@@ -17,9 +17,9 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
     shadow: { boxShadow: "0 12px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.2)" },
     neon: { boxShadow: `0 0 20px ${textColor}66, 0 0 40px ${textColor}33`, textShadow: `0 0 10px ${textColor}99` },
   };
-
+ 
   const textStyle: React.CSSProperties = effect === "neon" ? { textShadow: `0 0 8px ${textColor}88, 0 0 15px ${textColor}55` } : {};
-
+ 
   const inner = () => {
     if (layout === "textOnly") return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
@@ -61,14 +61,14 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
       </div>
     );
   };
-
+ 
   return (
     <div style={{ ...bgStyle, borderRadius: logo.borderRadius, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", ...effectStyles[effect] }}>
       {inner()}
     </div>
   );
 }
-
+ 
 const FONTS = [
   { label: "Playfair", value: "'Playfair Display', serif" },
   { label: "Montserrat", value: "'Montserrat', sans-serif" },
@@ -77,7 +77,7 @@ const FONTS = [
   { label: "Cormorant", value: "'Cormorant Garamond', serif" },
   { label: "Outfit", value: "'Outfit', sans-serif" },
 ];
-
+ 
 const LAYOUTS = [
   { label: "Icon Top", value: "iconTop" },
   { label: "Icon Left", value: "iconLeft" },
@@ -86,7 +86,7 @@ const LAYOUTS = [
   { label: "Text Only", value: "textOnly" },
   { label: "Horizontal", value: "horizontalBar" },
 ];
-
+ 
 const RADII = [
   { label: "Sharp", value: "0px" },
   { label: "Small", value: "8px" },
@@ -94,7 +94,7 @@ const RADII = [
   { label: "Large", value: "24px" },
   { label: "Pill", value: "999px" },
 ];
-
+ 
 const EFFECTS = [
   { label: "None", value: "none" },
   { label: "Glow", value: "glow" },
@@ -102,7 +102,7 @@ const EFFECTS = [
   { label: "Shadow", value: "shadow" },
   { label: "Neon", value: "neon" },
 ];
-
+ 
 function EditorInner() {
   const params = useSearchParams();
   const router = useRouter();
@@ -110,7 +110,7 @@ function EditorInner() {
   const [logo, setLogo] = useState<LogoConfig | null>(null);
   const [paid, setPaid] = useState(false);
   const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "effects" | "brand" | "downloads">("colors");
-
+ 
   useEffect(() => {
     const data = params.get("data");
     if (data) {
@@ -121,7 +121,7 @@ function EditorInner() {
       }
     }
   }, [params]);
-
+ 
   if (!logo) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: 16 }}>
       <p style={{ color: "#6b7280", fontSize: 15 }}>No logo selected.</p>
@@ -130,12 +130,12 @@ function EditorInner() {
       </button>
     </div>
   );
-
+ 
   const update = (patch: Partial<LogoConfig>) => setLogo(prev => prev ? { ...prev, ...patch } : prev);
-
+ 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "#f8f8f8" }}>
-
+ 
       <div style={{ height: 56, background: "white", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1.5rem", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 13 }}>
@@ -147,9 +147,9 @@ function EditorInner() {
           ⬇ Downloads
         </button>
       </div>
-
+ 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-
+ 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", gap: 24 }}>
           <div ref={previewRef} style={{ width: 480, height: 240, borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
             <LogoPreview logo={logo} />
@@ -163,9 +163,9 @@ function EditorInner() {
           </div>
           <p style={{ fontSize: 12, color: "#9ca3af" }}>Preview at different sizes</p>
         </div>
-
+ 
         <div style={{ width: 320, background: "white", borderLeft: "1px solid #f0f0f0", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
+ 
           <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0", flexWrap: "wrap" }}>
             {(["colors", "typography", "layout", "effects", "brand", "downloads"] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} style={{
@@ -178,9 +178,9 @@ function EditorInner() {
               </button>
             ))}
           </div>
-
+ 
           <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem" }}>
-
+ 
             {activeTab === "colors" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
@@ -188,13 +188,13 @@ function EditorInner() {
                   <input type="color" value={logo.background?.includes("linear") ? logo.palette.bg : (logo.background || logo.palette.bg)} onChange={e => update({ background: e.target.value })}
                     style={{ width: "100%", height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
                 </div>
-
+ 
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Text Color</label>
                   <input type="color" value={logo.textColor} onChange={e => update({ textColor: e.target.value })}
                     style={{ width: "100%", height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
                 </div>
-
+ 
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Quick Colors</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
@@ -216,7 +216,7 @@ function EditorInner() {
                 </div>
               </div>
             )}
-
+ 
             {activeTab === "typography" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
@@ -233,7 +233,7 @@ function EditorInner() {
                     ))}
                   </div>
                 </div>
-
+ 
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Font Weight</label>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -248,7 +248,7 @@ function EditorInner() {
                     ))}
                   </div>
                 </div>
-
+ 
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Size</label>
                   <input type="range" min="16" max="28" value={logo.fontSize} onChange={e => update({ fontSize: parseInt(e.target.value) })}
@@ -257,7 +257,7 @@ function EditorInner() {
                 </div>
               </div>
             )}
-
+ 
             {activeTab === "layout" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
@@ -273,7 +273,7 @@ function EditorInner() {
                     ))}
                   </div>
                 </div>
-
+ 
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Radius</label>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -290,7 +290,7 @@ function EditorInner() {
                 </div>
               </div>
             )}
-
+ 
             {activeTab === "effects" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -306,7 +306,7 @@ function EditorInner() {
                 </div>
               </div>
             )}
-
+ 
             {activeTab === "brand" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>Primary</p>
@@ -317,18 +317,18 @@ function EditorInner() {
                   onClick={() => navigator.clipboard.writeText(logo.textColor)} />
               </div>
             )}
-
+ 
             {activeTab === "downloads" && (
               <DownloadTab logo={logo} previewRef={previewRef} paid={paid} onUnlock={() => setPaid(true)} />
             )}
-
+ 
           </div>
         </div>
       </div>
     </div>
   );
 }
-
+ 
 export default function EditorPage() {
   return (
     <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "#6b7280" }}>Loading...</div>}>
@@ -336,3 +336,4 @@ export default function EditorPage() {
     </Suspense>
   );
 }
+ 

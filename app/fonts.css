@@ -1,0 +1,243 @@
+
+ 
+@font-face {
+  font-family: 'Apestron';
+  src: url('/fonts/apestron.ttf') format('truetype'),
+       url('/fonts/apestron.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Arkadelphia';
+  src: url('/fonts/arkadelphia.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Arkadelphia';
+  src: url('/fonts/arkadelphiaitalic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
+ 
+@font-face {
+  font-family: 'Arogant';
+  src: url('/fonts/arogant.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Atavian';
+  src: url('/fonts/atavian.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Corpta';
+  src: url('/fonts/corpta.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Decobra';
+  src: url('/fonts/decobra.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Eightstone';
+  src: url('/fonts/eightstone.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Kabisatitalictall';
+  src: url('/fonts/kabisatitalictall.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
+ 
+/* Koumon Family */
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonthinmlvdg.ttf') format('truetype');
+  font-weight: 100;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonextralightk7jxp.ttf') format('truetype');
+  font-weight: 200;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonlight2owxk.ttf') format('truetype');
+  font-weight: 300;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonw14az.ttf') format('truetype');
+  font-weight: 400;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonmediumvmowo.ttf') format('truetype');
+  font-weight: 500;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonsemibold7blva.ttf') format('truetype');
+  font-weight: 600;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonboldrgpoa.ttf') format('truetype');
+  font-weight: 700;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonextraboldmvjor.ttf') format('truetype');
+  font-weight: 800;
+}
+ 
+@font-face {
+  font-family: 'Koumon';
+  src: url('/fonts/koumonblackyzjdv.ttf') format('truetype');
+  font-weight: 900;
+}
+ 
+@font-face {
+  font-family: 'Library3am';
+  src: url('/fonts/library3am.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Library3amsoft';
+  src: url('/fonts/library3amsoft.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+/* Manbow Family */
+@font-face {
+  font-family: 'Manbow Clear';
+  src: url('/fonts/manbowclear.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Dots';
+  src: url('/fonts/manbowdots.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Fill';
+  src: url('/fonts/manbowfill.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Lines';
+  src: url('/fonts/manbowlines.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Screen';
+  src: url('/fonts/manbowscreen.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Solid';
+  src: url('/fonts/manbowsolid.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Spots';
+  src: url('/fonts/manbowspots.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Stripe';
+  src: url('/fonts/manbowstripe.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Manbow Tone';
+  src: url('/fonts/manbowtone.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Mollyn';
+  src: url('/fonts/mollyn.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Morrison';
+  src: url('/fonts/morrison.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Moubarubold';
+  src: url('/fonts/moubarubold.ttf') format('truetype');
+  font-weight: bold;
+}
+ 
+@font-face {
+  font-family: 'Nouveaunostalgia';
+  src: url('/fonts/nouveaunostalgia.ttf') format('truetype'),
+       url('/fonts/nouveaunostalgia.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Racehugo';
+  src: url('/fonts/racehugo.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Rochester';
+  src: url('/fonts/rochester.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Rushmax';
+  src: url('/fonts/rushmax.ttf') format('truetype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Rushmax';
+  src: url('/fonts/rushmaxoblique.ttf') format('truetype');
+  font-weight: normal;
+  font-style: oblique;
+}
+ 
+@font-face {
+  font-family: 'Vetro';
+  src: url('/fonts/vetro.otf') format('opentype');
+  font-weight: normal;
+}
+ 
+@font-face {
+  font-family: 'Weddingmagnolia';
+  src: url('/fonts/weddingmagnolia.ttf') format('truetype'),
+       url('/fonts/weddingmagnolia.otf') format('opentype');
+  font-weight: normal;
+}
