@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <g fill="none" fill-rule="evenodd">
+    <circle cx="32.5" cy="32.5" r="22.5" fill="#ECECEC"/>
+    <polygon fill="#22BA8E" points="32.5 36.178 20.833 44.167 28.822 32.5 20.833 20.833 32.5 28.822 44.167 20.833 36.178 32.5 44.167 44.167" transform="rotate(-45 32.5 32.5)"/>
+    <circle cx="32.5" cy="32.5" r="5.5" fill="#ED9111"/>
+    <path fill="#0A3586" d="M32.5,17 C28.3578644,17 25,13.6421356 25,9.5 C25,5.35786438 28.3578644,2 32.5,2 C36.6421356,2 40,5.35786438 40,9.5 C40,13.6421356 36.6421356,17 32.5,17 Z M47.5,32 C47.5,27.8578644 50.8578644,24.5 55,24.5 C59.1421356,24.5 62.5,27.8578644 62.5,32 C62.5,36.1421356 59.1421356,39.5 55,39.5 C50.8578644,39.5 47.5,36.1421356 47.5,32 Z M32.5,47 C36.6421356,47 40,50.3578644 40,54.5 C40,58.6421356 36.6421356,62 32.5,62 C28.3578644,62 25,58.6421356 25,54.5 C25,50.3578644 28.3578644,47 32.5,47 Z M17.5,32 C17.5,36.1421356 14.1421356,39.5 10,39.5 C5.85786438,39.5 2.5,36.1421356 2.5,32 C2.5,27.8578644 5.85786438,24.5 10,24.5 C14.1421356,24.5 17.5,27.8578644 17.5,32 Z"/>
+    <text fill="#ECECEC" font-family="MarkerFelt-Thin, Marker Felt" font-size="10" font-weight="300">
+      <tspan x="29.508" y="12.946">N</tspan>
+    </text>
+    <text fill="#ECECEC" font-family="MarkerFelt-Thin, Marker Felt" font-size="10" font-weight="300">
+      <tspan x="30.05" y="58">S</tspan>
+    </text>
+    <text fill="#ECECEC" font-family="MarkerFelt-Thin, Marker Felt" font-size="10" font-weight="300">
+      <tspan x="5.25" y="36">W</tspan>
+    </text>
+    <text fill="#ECECEC" font-family="MarkerFelt-Thin, Marker Felt" font-size="10" font-weight="300">
+      <tspan x="52.85" y="36">E</tspan>
+    </text>
+  </g>
+</svg>

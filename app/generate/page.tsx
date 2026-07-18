@@ -1,11 +1,11 @@
-
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoView from "@/components/LogoView";
+import MonogramLogoView from "@/components/MonogramLogoView";
 import { generateLogos, type LogoConfig } from "@/lib/generator";
 import { inspoLogos } from "@/lib/inspoLogos";
- 
+
 const INDUSTRIES = [
   "Technology","AI & Machine Learning","Startup","Crypto & Web3",
   "Restaurant","Cafe & Coffee","Food & Beverage",
@@ -15,7 +15,7 @@ const INDUSTRIES = [
   "Real Estate","Health & Medical","Travel & Hotel","Gaming",
   "Music","Media & Content","Online Learning","Construction",
 ];
- 
+
 const COLORS = [
   {name:"Blue",a:"#1d4ed8",b:"#93c5fd"},{name:"Purple",a:"#7c3aed",b:"#c4b5fd"},
   {name:"Pink",a:"#db2777",b:"#fbcfe8"},{name:"Red",a:"#dc2626",b:"#fca5a5"},
@@ -24,7 +24,7 @@ const COLORS = [
   {name:"Gold",a:"#92400e",b:"#fef3c7"},{name:"Black",a:"#111111",b:"#6b7280"},
   {name:"Navy",a:"#1e3a8a",b:"#bfdbfe"},{name:"Gray",a:"#374151",b:"#e5e7eb"},
 ];
- 
+
 export default function GeneratePage() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -37,10 +37,10 @@ export default function GeneratePage() {
   const [displayCount, setDisplayCount] = useState(12);
   const [selectedLogo, setSelectedLogo] = useState<number|null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
- 
+
   const router = useRouter();
   const progress = Math.round((step/7)*100);
- 
+
   // Intersection Observer برای infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -54,22 +54,22 @@ export default function GeneratePage() {
     if (loadMoreRef.current) observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
   }, [logos.length, displayCount]);
- 
+
   function goToEditor(logoIndex?: number) {
     const index = logoIndex ?? selectedLogo;
     if (index === null) return;
     const logo = logos[index];
     router.push(`/editor?data=${encodeURIComponent(JSON.stringify(logo))}`);
   }
- 
+
   function goTo(n: number) {
     if (n === 7) { setLogos(generateLogos({name,slogan,industry},100)); setDisplayCount(20); }
     setStep(n);
     window.scrollTo(0,0);
   }
- 
+
   const filtered = search ? INDUSTRIES.filter(i=>i.toLowerCase().includes(search.toLowerCase())) : INDUSTRIES;
- 
+
   return (
     <div className="min-h-screen bg-white">
       <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between">
@@ -78,9 +78,9 @@ export default function GeneratePage() {
           <div className="h-1 bg-indigo-500 rounded-full transition-all duration-500" style={{width:`${progress}%`}} />
         </div>
       </div>
- 
+
       <div className={step === 7 ? "max-w-6xl mx-auto px-6 py-10" : "max-w-lg mx-auto px-4 py-10"}>
- 
+
         {step===1 && (
           <div className="flex flex-col gap-8">
             <div className="text-center">
@@ -97,7 +97,7 @@ export default function GeneratePage() {
             </div>
           </div>
         )}
- 
+
         {step===2 && (
           <div className="flex flex-col gap-5">
             <div className="flex justify-between items-center">
@@ -121,7 +121,7 @@ export default function GeneratePage() {
             </div>
           </div>
         )}
- 
+
         {step===3 && (
           <div className="flex flex-col gap-5">
             <div className="flex justify-between items-center">
@@ -145,7 +145,7 @@ export default function GeneratePage() {
             <button onClick={()=>goTo(4)} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700">Continue →</button>
           </div>
         )}
- 
+
         {step===4 && (
           <div className="flex flex-col gap-5">
             <div className="flex justify-between items-center">
@@ -168,7 +168,7 @@ export default function GeneratePage() {
             <button onClick={()=>goTo(5)} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700">Continue →</button>
           </div>
         )}
- 
+
         {step===5 && (
           <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
@@ -193,7 +193,7 @@ export default function GeneratePage() {
             </div>
           </div>
         )}
- 
+
         {step===6 && (
           <div className="flex flex-col gap-5">
             <div className="flex justify-between items-center">
@@ -215,7 +215,7 @@ export default function GeneratePage() {
             </button>
           </div>
         )}
- 
+
         {step===7 && (
           <div className="flex flex-col gap-5">
             <div className="flex justify-between items-center">
@@ -233,7 +233,11 @@ export default function GeneratePage() {
               {logos.slice(0, displayCount).map((logo,i)=>(
                 <div key={i} className="flex flex-col gap-3">
                   <div style={{ height: "280px", borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-                    <LogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
+                    {logo.isMonogram ? (
+                      <MonogramLogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
+                    ) : (
+                      <LogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
+                    )}
                   </div>
                   <button onClick={()=>goToEditor(i)} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
                     Customize
@@ -253,7 +257,7 @@ export default function GeneratePage() {
             </button>
           </div>
         )}
- 
+
       </div>
     </div>
   );

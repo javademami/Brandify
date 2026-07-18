@@ -1,0 +1,14 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 68" width="132" height="68">
+	<style>
+		.s0 { opacity: .7;fill: #a3bd31 } 
+		.s1 { opacity: .7;fill: #ba007c } 
+		.s2 { opacity: .7;fill: #3367bc } 
+	</style>
+	<g id="&lt;Group&gt;">
+		<g id="&lt;Group&gt;">
+			<path id="&lt;Path&gt;" class="s0" d="m21.97 68.16l36.55-68.36h-21.28l-36.55 68.36z"/>
+			<path id="&lt;Path&gt;" class="s1" d="m73.61 68.16l-36.54-68.36h21.27l36.55 68.36z"/>
+			<path id="&lt;Path&gt;" class="s2" d="m94.76 68.16l36.55-68.36h-21.28l-36.55 68.36z"/>
+		</g>
+	</g>
+</svg>

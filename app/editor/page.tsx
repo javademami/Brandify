@@ -3,10 +3,30 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Suspense } from "react";
 import type { LogoConfig } from "@/lib/generator";
+import { isDark, PALETTES } from "@/lib/palettes";
 import DownloadTab from "@/components/Downloadtab";
  
+// Smart Contrast Function
+function isLightColor(bgColor: string): boolean {
+  if (bgColor.includes("linear-gradient")) return false;
+  
+  let r = 0, g = 0, b = 0;
+  
+  if (bgColor.startsWith("#")) {
+    const hex = bgColor.slice(1);
+    r = parseInt(hex.slice(0, 2), 16);
+    g = parseInt(hex.slice(2, 4), 16);
+    b = parseInt(hex.slice(4, 6), 16);
+  } else if (bgColor.startsWith("rgb")) {
+    const match = bgColor.match(/\d+/g);
+    if (match) [r, g, b] = match.map(Number);
+  }
+  
+  return (r + g + b) / 3 > 128;
+}
+
 function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) {
-  const { name, slogan, iconPath, palette, layout, font, fontSize, fontWeight, textColor, background, effect } = logo as any;
+  const { name, slogan, iconPath, palette, layout, fontFamily, fontSize, fontWeight, textColor, background, effect } = logo;
   const iconSize = layout === "iconBig" ? 72 : layout === "badge" ? 48 : 60;
   const bgStyle = background?.includes("linear") ? { background } : { background: background || palette.bg };
  
@@ -23,31 +43,31 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
   const inner = () => {
     if (layout === "textOnly") return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
-        <span style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 6) * scale, color: textColor, letterSpacing: "0.02em", ...textStyle }}>{name}</span>
-        {slogan && <span style={{ fontFamily: font, fontSize: 12 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</span>}
+        <span style={{ fontFamily, fontWeight, fontSize: (fontSize + 6) * scale, color: textColor, letterSpacing: "0.02em", ...textStyle }}>{name}</span>
+        {slogan && <span style={{ fontFamily, fontSize: 12 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</span>}
       </div>
     );
     if (layout === "horizontalBar") return (
       <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 14 * scale }}>
         <img src={iconPath} width={48 * scale} height={48 * scale} alt="" />
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</div>
-          {slogan && <div style={{ fontFamily: font, fontSize: 10 * scale, color: textColor, opacity: 0.6 }}>{slogan}</div>}
+          <div style={{ fontFamily, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</div>
+          {slogan && <div style={{ fontFamily, fontSize: 10 * scale, color: textColor, opacity: 0.6 }}>{slogan}</div>}
         </div>
       </div>
     );
     if (layout === "badge") return (
       <div style={{ display: "flex", alignItems: "center", gap: 10 * scale }}>
         <img src={iconPath} width={iconSize * scale} height={iconSize * scale} alt="" />
-        <span style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</span>
+        <span style={{ fontFamily, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</span>
       </div>
     );
     if (layout === "iconLeft") return (
       <div style={{ display: "flex", alignItems: "center", gap: 14 * scale }}>
         <img src={iconPath} width={iconSize * scale} height={iconSize * scale} alt="" />
         <div>
-          <div style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</div>
-          {slogan && <div style={{ fontFamily: font, fontSize: 11 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</div>}
+          <div style={{ fontFamily, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</div>
+          {slogan && <div style={{ fontFamily, fontSize: 11 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</div>}
         </div>
       </div>
     );
@@ -55,8 +75,8 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 * scale }}>
         <img src={iconPath} width={iconSize * scale} height={iconSize * scale} alt="" />
         <div style={{ textAlign: "center" }}>
-          <span style={{ fontFamily: font, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</span>
-          {slogan && <div style={{ fontFamily: font, fontSize: 11 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</div>}
+          <span style={{ fontFamily, fontWeight, fontSize: (fontSize + 2) * scale, color: textColor, ...textStyle }}>{name}</span>
+          {slogan && <div style={{ fontFamily, fontSize: 11 * scale, color: textColor, opacity: 0.6 }}>{slogan.toUpperCase()}</div>}
         </div>
       </div>
     );
@@ -102,12 +122,18 @@ const EFFECTS = [
   { label: "Shadow", value: "shadow" },
   { label: "Neon", value: "neon" },
 ];
+
+// ✅ 16 Quick Colors از 239 پالت (برای نمایش سریع)
+const QUICK_PALETTE_COLORS = PALETTES.slice(0, 16).map(p => ({
+  bg: p.bg.includes("linear-gradient") ? p.bg : p.bg,
+  text: p.textLight || p.textDark,
+}));
  
 function EditorInner() {
   const params = useSearchParams();
   const router = useRouter();
   const previewRef = useRef<HTMLDivElement>(null);
-  const [logo, setLogo] = useState<any | null>(null);
+  const [logo, setLogo] = useState<LogoConfig | null>(null);
   const [paid, setPaid] = useState(false);
   const [activeTab, setActiveTab] = useState<"colors" | "typography" | "layout" | "effects" | "brand" | "downloads">("colors");
  
@@ -132,6 +158,11 @@ function EditorInner() {
   );
  
   const update = (patch: Partial<LogoConfig>) => setLogo(prev => prev ? { ...prev, ...patch } : prev);
+  
+  // ✅ Smart contrast برای background
+  const bgColor = logo.background?.includes("linear") ? logo.background : (logo.background || logo.palette.bg);
+  const bgIsLight = isLightColor(bgColor);
+  const smartTextColor = bgIsLight ? "#1a1a1a" : "#ffffff";
  
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "#f8f8f8" }}>
@@ -185,7 +216,7 @@ function EditorInner() {
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Background</label>
-                  <input type="color" value={logo.background?.includes("linear") ? logo.palette.bg : (logo.background || logo.palette.bg)} onChange={e => update({ background: e.target.value })}
+                  <input type="color" value={bgColor.includes("linear") ? "#4f46e5" : bgColor} onChange={e => update({ background: e.target.value })}
                     style={{ width: "100%", height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
                 </div>
  
@@ -193,26 +224,38 @@ function EditorInner() {
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Text Color</label>
                   <input type="color" value={logo.textColor} onChange={e => update({ textColor: e.target.value })}
                     style={{ width: "100%", height: 40, borderRadius: 8, border: "none", cursor: "pointer" }} />
+                  <button onClick={() => update({ textColor: smartTextColor })} style={{
+                    width: "100%", marginTop: 8, padding: "6px", fontSize: 11, background: "#f3f4f6", border: "1px solid #e5e7eb",
+                    borderRadius: 6, cursor: "pointer", color: "#6b7280", fontWeight: 600
+                  }}>
+                    🎨 Smart Contrast
+                  </button>
                 </div>
  
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Quick Colors</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Quick Colors (239 Palettes)</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-                    {[
-                      { bg: "#000000", text: "#D4AF37" },
-                      { bg: "#0f172a", text: "#3b82f6" },
-                      { bg: "#ffffff", text: "#111111" },
-                      { bg: "#dc2626", text: "#ffffff" },
-                      { bg: "#065f46", text: "#6ee7b7" },
-                      { bg: "#4f46e5", text: "#ffffff" },
-                      { bg: "#1e3a8a", text: "#ffffff" },
-                      { bg: "#7c3aed", text: "#f9a8d4" },
-                    ].map((p, i) => (
-                      <div key={i} onClick={() => { update({ background: p.bg, textColor: p.text }); }}
-                        style={{ height: 32, borderRadius: 6, background: p.bg, border: "2px solid #e5e7eb", cursor: "pointer" }}
+                    {QUICK_PALETTE_COLORS.map((p, i) => (
+                      <div key={i} onClick={() => { 
+                        update({ 
+                          background: p.bg, 
+                          textColor: isLightColor(p.bg) ? "#1a1a1a" : "#ffffff" 
+                        }); 
+                      }}
+                        style={{ 
+                          height: 32, 
+                          borderRadius: 6, 
+                          background: p.bg, 
+                          border: "2px solid #e5e7eb", 
+                          cursor: "pointer",
+                          transition: "transform 0.2s",
+                        }}
+                        onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.transform = "scale(1.1)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.transform = "scale(1)"}
                       />
                     ))}
                   </div>
+                  <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 8 }}>💡 Click any color to apply with smart text</p>
                 </div>
               </div>
             )}
@@ -223,10 +266,10 @@ function EditorInner() {
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 8 }}>Font</label>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {FONTS.map(f => (
-                      <button key={f.value} onClick={() => update({ font: f.value })} style={{
-                        padding: "8px 12px", borderRadius: 6, border: logo.font === f.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
-                        background: logo.font === f.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
-                        fontFamily: f.value, fontSize: 12, color: logo.font === f.value ? "#4338ca" : "#374151",
+                      <button key={f.value} onClick={() => update({ fontFamily: f.value })} style={{
+                        padding: "8px 12px", borderRadius: 6, border: logo.fontFamily === f.value ? "2px solid #4f46e5" : "1.5px solid #e5e7eb",
+                        background: logo.fontFamily === f.value ? "#eef2ff" : "white", cursor: "pointer", textAlign: "left",
+                        fontFamily: f.value, fontSize: 12, color: logo.fontFamily === f.value ? "#4338ca" : "#374151",
                       }}>
                         {f.label}
                       </button>
@@ -310,11 +353,12 @@ function EditorInner() {
             {activeTab === "brand" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>Primary</p>
-                <div style={{ height: 48, borderRadius: 6, background: logo.background?.includes("linear") ? logo.palette.bg : (logo.background || logo.palette.bg), border: "1px solid #e5e7eb", cursor: "pointer" }}
-                  onClick={() => navigator.clipboard.writeText(logo.background || logo.palette.bg)} />
+                <div style={{ height: 48, borderRadius: 6, background: bgColor, border: "1px solid #e5e7eb", cursor: "pointer" }}
+                  onClick={() => navigator.clipboard.writeText(bgColor)} />
                 <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>Text</p>
                 <div style={{ height: 48, borderRadius: 6, background: logo.textColor, border: "1px solid #e5e7eb", cursor: "pointer" }}
                   onClick={() => navigator.clipboard.writeText(logo.textColor)} />
+                <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 8 }}>💡 Click to copy color codes</p>
               </div>
             )}
  
@@ -336,4 +380,3 @@ export default function EditorPage() {
     </Suspense>
   );
 }
- 

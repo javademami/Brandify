@@ -1,0 +1,18 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 194 163" width="194" height="163">
+	<style>
+		.s0 { fill: #404040 } 
+		.s1 { fill: #bfbfbf } 
+		.s2 { mix-blend-mode: multiply;fill: #828282 } 
+		.s3 { mix-blend-mode: multiply;fill: #404040 } 
+		.s4 { mix-blend-mode: multiply;fill: #000000 } 
+	</style>
+	<g id="&lt;Group&gt;">
+		<g id="&lt;Group&gt;">
+			<path id="&lt;Path&gt;" class="s0" d="m178.88 43.51v11.43l16.01-1.76z"/>
+			<path id="&lt;Path&gt;" class="s1" d="m180.49 27l-44.97 31.78v89.75l43.36-11.98z"/>
+			<path id="&lt;Path&gt;" class="s2" d="m115.4 154.15l63.44-17.52-121.86-136.47"/>
+			<path id="&lt;Path&gt;" class="s3" d="m94.51 159.95l83.67-23.24-163.3-82.52"/>
+			<path id="&lt;Path&gt;" class="s4" d="m178.77 136.49l-178.31-41.02 83.95 67.29z"/>
+		</g>
+	</g>
+</svg>

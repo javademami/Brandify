@@ -1,3 +1,5 @@
+
+
 import { getPalettesForIndustry, isDark, type Palette } from "./palettes";
 
 export type Layout = "iconTop" | "iconLeft" | "iconBig" | "badge" | "textOnly" | "horizontalBar";
@@ -31,6 +33,8 @@ export interface LogoConfig {
   fontStyle: FontStyle;
   fontCategory: FontCategory;
   frameStyle: FrameStyle;
+  sloganFont?: string;
+  isMonogram?: boolean;
 }
 
 const LAYOUTS: Layout[] = ["iconTop", "iconTop", "iconTop", "iconBig", "iconTop", "badge"];
@@ -144,14 +148,14 @@ const METALLIC_GRADIENTS = [
   "linear-gradient(135deg, #71797e 0%, #b8b8b8 50%, #71797e 100%)",
 ];
 
-// 📏 Letter Spacing Variations (مثل Looka)
+// 📏 Letter Spacing Variations (مثل Looka) - کاهش شده
 const LETTER_SPACINGS = [
   "0px",      // compact
+  "0px",      // tight
+  "0.02em",   // very tight
   "0.05em",   // tight
   "0.1em",    // normal
-  "0.2em",    // wide
-  "0.35em",   // very wide
-  "0.5em",    // extra wide
+  "0.15em",   // wide
 ];
 
 // 🔤 Text Transform Options
@@ -188,12 +192,21 @@ function getFontCategory(fontStyle: FontStyle): FontCategory {
   }
 }
 
+// 🎨 Font Pairing - Slogan gets different font than name (فقط Serif یا Sans - بدون Script)
+function getComplementaryFont(fontStyle: FontStyle): typeof LUXURY_FONTS[0] {
+  // Slogan فقط Serif یا Sans استفاده کند
+  const luxurySans = Math.random() > 0.5 ? LUXURY_FONTS : TECH_FONTS;
+  return luxurySans[Math.floor(Math.random() * luxurySans.length)];
+}
+
 // 🧠 Smart Text Transform (Looka logic)
 function getSmartTextTransform(fontCategory: FontCategory): "uppercase" | "lowercase" | "capitalize" | "none" {
   if (fontCategory === "script") {
-    return "capitalize"; // Script fonts: Lordex (capitalize)
+    return "capitalize"; // Script fonts: capitalize (Caveat)
+  } else if (fontCategory === "serif") {
+    return "uppercase"; // Serif fonts: uppercase (Playfair)
   } else {
-    return "uppercase"; // Serif & Sans: LORDEX (uppercase)
+    return "none"; // Sans fonts: NO transform (keep original case)
   }
 }
 
@@ -225,22 +238,26 @@ export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
     const primaryWeight = primaryFont.weight[i % primaryFont.weight.length];
     
     // Use primary for main name, secondary for slogan/subtitle
-    const fontSize = 24 + (i % 6) * 3;
+    const fontSize = 28 + (i % 6) * 2;  // بیشتر از 24-39 به 28-39
     const letterSpacing = LETTER_SPACINGS[i % LETTER_SPACINGS.length];
     // 🧠 Smart text transform based on font type (Script vs Non-Script)
     const textTransform = getSmartTextTransform(fontCategory);
     
     const borderRadius = BORDER_RADII[(i * 3) % BORDER_RADII.length];
     
-    let background = palette.bg;
-    const useGradient = i % 2 === 0 && dark;
-    const useMetallic = i % 5 === 0;
+    // 🎨 Frame Style - فقط 15% لوگوها (15 تا از 100)
+    const frameStyle = (i % 7 === 0) ? FRAME_STYLES[Math.floor(i / 7) % FRAME_STYLES.length] : "none";
     
-    if (useMetallic) {
+    let background = palette.bg;
+    const useGradient = i % 2 === 0 && dark && frameStyle === "none"; // فقط اگر frame نباشد
+    const useMetallic = i % 5 === 0 && frameStyle === "none"; // فقط اگر frame نباشد
+    
+    if (useMetallic && frameStyle === "none") {
       background = METALLIC_GRADIENTS[i % METALLIC_GRADIENTS.length];
-    } else if (useGradient) {
+    } else if (useGradient && frameStyle === "none") {
       background = GRADIENTS[i % GRADIENTS.length];
     }
+    // برای frames: همیشه solid color
 
     const effect: Effect = EFFECTS[i % EFFECTS.length];
     const canHaveDecoration = layout === "textOnly" && i % 10 === 0;
@@ -251,9 +268,6 @@ export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
     if (decoration !== "none" && i % 2 === 0) {
       decorationColor = dark ? palette.accent : palette.primary;
     }
-    
-    // 🎨 Frame Style - فقط 15% لوگوها (15 تا از 100)
-    const frameStyle = (i % 7 === 0) ? FRAME_STYLES[Math.floor(i / 7) % FRAME_STYLES.length] : "none";
     
     let iconColor = dark ? "#ffffff" : "#000000";
     const colorVariation = i % 5;
@@ -266,6 +280,13 @@ export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
     } else if (colorVariation === 4 && !dark) {
       iconColor = palette.textDark;
     }
+
+    // 🎨 Slogan Font - مختلف از نام لوگو
+    const complementaryFont = getComplementaryFont(fontStyle);
+    const sloganFont = complementaryFont.family;
+    
+    // 📱 Monogram Logo - فقط 10% (هر 10 لوگو یکی) - متفاوت از frames
+    const isMonogram = frameStyle === "none" && (i % 10 === 3);
 
     logos.push({
       name, slogan, iconPath, palette,
@@ -287,6 +308,8 @@ export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
       fontStyle,
       fontCategory,
       frameStyle,
+      sloganFont,
+      isMonogram,
     });
   }
   return logos;

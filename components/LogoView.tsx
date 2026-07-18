@@ -1,260 +1,305 @@
-
 "use client";
 import type { LogoConfig } from "@/lib/generator";
+
+// تشخیص روشن/تاریک بودن رنگ
+function isLightColor(bgColor: string): boolean {
+  if (bgColor.includes("linear-gradient")) return false;
+  
+  let r = 0, g = 0, b = 0;
+  
+  if (bgColor.startsWith("#")) {
+    const hex = bgColor.slice(1);
+    r = parseInt(hex.slice(0, 2), 16);
+    g = parseInt(hex.slice(2, 4), 16);
+    b = parseInt(hex.slice(4, 6), 16);
+  } else if (bgColor.startsWith("rgb")) {
+    const match = bgColor.match(/\d+/g);
+    if (match) [r, g, b] = match.map(Number);
+  }
+  
+  return (r + g + b) / 3 > 128;
+}
 
 export default function LogoView({ logo, selected, onClick }: {
   logo: LogoConfig; selected?: boolean; onClick?: () => void;
 }) {
-  const { name, slogan, iconPath, layout, fontFamily, fontSize, fontWeight, borderRadius, textColor, background, palette, effect, decoration, decorationColor, textDecoration, iconColor, letterSpacing, textTransform, frameStyle } = logo;
+  const { name, slogan, fontFamily, fontSize, fontWeight, background, palette, effect, textColor, frameStyle } = logo;
   
-  // اگر frame داشته باشد، background یک رنگ (بدون gradient)
-  let bgColor = background?.includes("linear") ? background : (background || palette.bg);
-  if (frameStyle !== "none" && background?.includes("linear")) {
-    bgColor = palette.bg; // استفاده از solid color برای frames
-  }
+  const bgColor = background?.includes("linear") ? background : (background || palette.bg);
+  const isFramed = frameStyle !== "none";
+  const bgIsLight = isLightColor(bgColor);
   
-  const iconSize = layout === "iconBig" ? 72 : layout === "badge" ? 48 : 60;
-
   const effectBoxShadow = {
-    none: "0 4px 12px rgba(0,0,0,0.08)",
-    glow: `0 0 30px ${textColor}44, inset 0 0 20px ${textColor}22`,
-    metallic: "0 8px 20px rgba(212, 175, 55, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.2)",
-    shadow: "0 12px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.2)",
-    neon: `0 0 20px ${textColor}66, 0 0 40px ${textColor}33`,
-  }[effect] || "0 4px 12px rgba(0,0,0,0.08)";
+    none: "0 2px 8px rgba(0,0,0,0.1)",
+    glow: `0 0 20px ${textColor}40`,
+    metallic: "0 4px 12px rgba(212, 175, 55, 0.2)",
+    shadow: "0 8px 16px rgba(0, 0, 0, 0.2)",
+    neon: `0 0 15px ${textColor}50`,
+  }[effect] || "0 2px 8px rgba(0,0,0,0.1)";
 
-  const renderDecoration = () => {
-    const decorStyle = { position: "absolute" as const, opacity: 0.15, color: decorationColor };
+  // آیکن: 35% عرض
+  const iconSize = "35%";
+  const maxIconSize = 98;
+  
+  // فونت‌های Frames بزرگ‌تر
+  const displayFontSize = isFramed ? 18 : fontSize;
+  const sloganFontSize = Math.max(10, Math.floor(displayFontSize * 0.35));
+  
+  // فاصله‌ها
+  const gapNameSlogan = 6;
+  const gapIconName = 10;
+  
+  // رنگ‌های متن برای Frames: هوشمند
+  // اگر پس‌زمینه روشن است → متن تاریک
+  // اگر پس‌زمینه تاریک است → متن روشن/طلایی
+  const frameTextColor = bgIsLight ? "#1a1a1a" : "#ffffff";
+  const frameGolden = "#d4af37";
+  const goldenGradient = `linear-gradient(135deg, ${frameGolden} 0%, #ffeaa7 50%, ${frameGolden} 100%)`;
+  
+  const renderContent = () => {
+    // در Frames: اگر bg تاریک، متن طلایی؛ اگر روشن، متن تاریک
+    const textColorForFrame = isFramed && !bgIsLight ? frameGolden : (isFramed ? frameTextColor : textColor);
     
-    if (decoration === "circle") {
-      return <div style={{...decorStyle, top: 10, right: 10, fontSize: 40}}>●</div>;
-    }
-    if (decoration === "square") {
-      return <div style={{...decorStyle, top: 10, left: 10, fontSize: 40}}>■</div>;
-    }
-    if (decoration === "border") {
-      return <div style={{position: "absolute", inset: 15, border: `2px dashed ${decorationColor}`, opacity: 0.3, borderRadius: 8}} />;
-    }
-    if (decoration === "frame") {
-      return <div style={{position: "absolute", inset: 20, border: `3px solid ${decorationColor}`, opacity: 0.2, borderRadius: 4}} />;
-    }
-    return null;
-  };
-
-  const renderLayout = () => {
-    const getTextDecorationStyle = (): React.CSSProperties => {
-      switch(textDecoration) {
-        case "underline":
-          return { textDecoration: "underline", textDecorationThickness: "2px", textUnderlineOffset: "4px" };
-        case "overline":
-          return { textDecoration: "overline", textDecorationThickness: "2px" };
-        default:
-          return {};
-      }
+    const nameStyle: React.CSSProperties = isFramed && !bgIsLight ? {
+      fontFamily,
+      fontWeight,
+      color: textColorForFrame,
+      fontSize: displayFontSize,
+      margin: 0,
+      lineHeight: "1.2",
+      textAlign: "center",
+      wordBreak: "break-word",
+      maxWidth: "100%",
+    } : isFramed && bgIsLight ? {
+      fontFamily,
+      fontWeight,
+      color: frameTextColor,
+      fontSize: displayFontSize,
+      margin: 0,
+      lineHeight: "1.2",
+      textAlign: "center",
+      wordBreak: "break-word",
+      maxWidth: "100%",
+    } : {
+      fontFamily,
+      fontWeight,
+      color: textColor,
+      fontSize: displayFontSize,
+      margin: 0,
+      lineHeight: "1.1",
+      textAlign: "center",
+      wordBreak: "break-word",
+      maxWidth: "100%",
     };
 
-    const getIconFilter = () => {
-      if (iconColor === "#ffffff") {
-        return "brightness(0) invert(1)";
-      } else if (iconColor === "#000000") {
-        return "brightness(0)";
-      } else {
-        return "saturate(1.2) brightness(1.1)";
-      }
+    const sloganStyle: React.CSSProperties = isFramed && !bgIsLight ? {
+      fontFamily: logo.sloganFont || fontFamily,
+      fontWeight: "400",
+      color: textColorForFrame,
+      fontSize: sloganFontSize,
+      margin: 0,
+      lineHeight: "1.2",
+      textAlign: "center",
+      wordBreak: "break-word",
+      maxWidth: "100%",
+    } : isFramed && bgIsLight ? {
+      fontFamily: logo.sloganFont || fontFamily,
+      fontWeight: "400",
+      color: frameTextColor,
+      fontSize: sloganFontSize,
+      margin: 0,
+      lineHeight: "1.2",
+      opacity: 0.9,
+      textAlign: "center",
+      wordBreak: "break-word",
+      maxWidth: "100%",
+    } : {
+      fontFamily: logo.sloganFont || fontFamily,
+      fontWeight: "400",
+      color: textColor,
+      fontSize: sloganFontSize,
+      margin: 0,
+      lineHeight: "1.1",
+      opacity: 0.8,
+      textAlign: "center",
+      wordBreak: "break-word",
+      maxWidth: "100%",
     };
 
-    const commonTextProps = { fontFamily, fontWeight, color: textColor, letterSpacing: letterSpacing as any, textTransform: textTransform as any, ...getTextDecorationStyle() };
-    const iconStyle = { filter: getIconFilter() };
-    
-    if (layout === "textOnly") {
-      return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
-          <span style={{ ...commonTextProps, fontSize: fontSize + 10, letterSpacing: "0.02em", fontWeight: "700" }}>{name}</span>
-          {slogan && <span style={{ ...commonTextProps, fontSize: 13, opacity: 0.6 }}>{slogan.toUpperCase()}</span>}
-        </div>
-      );
-    }
-    
-    if (layout === "badge") {
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: "90%" }}>
-          {iconPath && <img src={iconPath} width={36} height={36} alt="icon" style={iconStyle} />}
-          <span style={{ ...commonTextProps, fontSize: fontSize + 4, fontWeight: "600" }}>{name}</span>
-        </div>
-      );
-    }
-    
-    if (layout === "iconLeft") {
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {iconPath && <img src={iconPath} width={44} height={44} alt="icon" style={iconStyle} />}
-          <div>
-            <div style={{ ...commonTextProps, fontSize: fontSize + 2, fontWeight: "600" }}>{name}</div>
-            {slogan && <div style={{ ...commonTextProps, fontSize: 11, opacity: 0.6, marginTop: 2 }}>{slogan.toUpperCase()}</div>}
-          </div>
-        </div>
-      );
-    }
-    
-    if (layout === "iconBig") {
-      return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          {iconPath && <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />}
-          <div style={{ textAlign: "center" }}>
-            <span style={{ ...commonTextProps, fontSize: fontSize + 2 }}>{name}</span>
-            {slogan && <div style={{ ...commonTextProps, fontSize: 11, opacity: 0.6, marginTop: 2 }}>{slogan.toUpperCase()}</div>}
-          </div>
-        </div>
-      );
-    }
-    
-    // default: iconTop - ICON بالا
+    const iconStyle: React.CSSProperties = {
+      width: iconSize,
+      maxWidth: maxIconSize,
+      height: "auto",
+      aspectRatio: "1 / 1",
+      flexShrink: 0,
+      marginBottom: gapIconName,
+    };
+
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-        {iconPath && <img src={iconPath} width={iconSize} height={iconSize} alt="icon" style={iconStyle} />}
-        <div style={{ textAlign: "center" }}>
-          <span style={{ ...commonTextProps, fontSize: fontSize + 2, fontWeight: "700" }}>{name}</span>
-          {slogan && <div style={{ ...commonTextProps, fontSize: 12, opacity: 0.6, marginTop: 3 }}>{slogan.toUpperCase()}</div>}
+      <div style={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        width: "100%",
+        minWidth: 0,
+        paddingTop: "18px",
+        paddingLeft: "8px",
+        paddingRight: "8px",
+        paddingBottom: "8px",
+      }}>
+        {logo.iconPath && (
+          <img 
+            src={logo.iconPath} 
+            alt="icon" 
+            style={iconStyle}
+          />
+        )}
+        <div style={{ 
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%", 
+          minWidth: 0,
+          gap: `${gapNameSlogan}px`,
+        }}>
+          <div style={nameStyle}>{name}</div>
+          {slogan && <div style={sloganStyle}>{slogan}</div>}
         </div>
       </div>
     );
   };
 
-  // Frame Renderers - کوچکتر، بدون gradient، border بولدتر
-  const renderFrame = () => {
-    const content = renderLayout();
+  const content = renderContent();
 
-    if (frameStyle === "gold-square") {
-      return (
-        <div style={{
-          background: bgColor,
-          padding: "20px",
-          border: "4px solid rgba(212, 175, 55, 0.7)",
+  if (isFramed) {
+    const frameTextColorBorder = bgIsLight ? "#333333" : frameGolden;
+    
+    const frameContainerStyle: React.CSSProperties = frameStyle === "thin-circle" || frameStyle === "inner-dashed-circle" || frameStyle === "solid-dark-circle"
+      ? {
+          width: "180px",
+          height: "180px",
+          borderRadius: "50%",
+          border: `5px solid ${frameStyle === "solid-dark-circle" ? "#888" : frameTextColorBorder}`,
+          background: frameStyle === "solid-dark-circle" ? "#1a1a1a" : bgColor,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "12px",
+          position: "relative" as const,
+          overflow: "hidden" as const,
+          boxShadow: frameStyle === "solid-dark-circle" ? "none" : `0 0 20px ${frameTextColorBorder}30`,
+        }
+      : {
+          minWidth: "160px",
+          maxWidth: "180px",
+          minHeight: "160px",
+          border: `5px solid ${frameTextColorBorder}`,
           borderRadius: "8px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          maxWidth: "220px",
-        }}>
-          {content}
-        </div>
-      );
-    }
-
-    if (frameStyle === "thin-circle") {
-      return (
-        <div style={{
           background: bgColor,
-          width: "160px",
-          height: "160px",
-          borderRadius: "50%",
-          border: "3px solid rgba(212, 175, 55, 0.7)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "15px",
-        }}>
-          {content}
-        </div>
-      );
-    }
+          padding: "12px",
+          overflow: "hidden" as const,
+          boxShadow: `0 0 20px ${frameTextColorBorder}30`,
+        };
 
-    if (frameStyle === "inner-dashed-circle") {
+    if (frameStyle === "solid-dark-circle") {
       return (
-        <div style={{
+        <div onClick={onClick} style={{
           background: bgColor,
-          width: "160px",
-          height: "160px",
-          borderRadius: "50%",
-          border: "3px solid rgba(212, 175, 55, 0.7)",
+          width: "100%",
+          height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "15px",
-          position: "relative",
+          cursor: "pointer",
+          border: selected ? "2.5px solid #6366f1" : "1px solid rgba(255,255,255,0.1)",
+          padding: "8px",
+          boxSizing: "border-box",
         }}>
-          <div style={{
-            position: "absolute",
-            inset: "20px",
-            borderRadius: "50%",
-            border: "2px dashed rgba(212, 175, 55, 0.5)",
-            pointerEvents: "none",
-          }} />
-          <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ ...frameContainerStyle, color: "#ffffff" }}>
             {content}
           </div>
         </div>
       );
     }
 
-    if (frameStyle === "solid-dark-circle") {
+    if (frameStyle === "inner-dashed-circle") {
       return (
-        <div style={{
-          background: "#1a1a1a",
-          width: "160px",
-          height: "160px",
-          borderRadius: "50%",
-          border: "3px solid #666",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "15px",
-        }}>
-          <div style={{ color: "#ffffff" }}>
-            {renderLayout()}
-          </div>
-        </div>
-      );
-    }
-
-    if (frameStyle === "gradient-block") {
-      return (
-        <div style={{
+        <div onClick={onClick} style={{
           background: bgColor,
-          padding: "20px",
-          borderRadius: "8px",
-          border: "4px solid rgba(212, 175, 55, 0.7)",
+          width: "100%",
+          height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          maxWidth: "220px",
+          cursor: "pointer",
+          border: selected ? "2.5px solid #6366f1" : "1px solid rgba(255,255,255,0.1)",
+          padding: "8px",
+          boxSizing: "border-box",
         }}>
-          <div style={{ color: "#1a1a1a" }}>
-            {renderLayout()}
+          <div style={{ ...frameContainerStyle, position: "relative" }}>
+            <div style={{
+              position: "absolute",
+              inset: "14px",
+              borderRadius: "50%",
+              border: `2px dashed ${frameTextColorBorder}`,
+              opacity: 0.5,
+              pointerEvents: "none",
+            }} />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              {content}
+            </div>
           </div>
         </div>
       );
     }
 
-    return content;
-  };
+    return (
+      <div onClick={onClick} style={{
+        background: bgColor,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        border: selected ? "2.5px solid #6366f1" : "1px solid rgba(255,255,255,0.1)",
+        padding: "8px",
+        boxSizing: "border-box",
+      }}>
+        <div style={frameContainerStyle}>
+          {content}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div onClick={onClick} style={{
       background: bgColor,
-      borderRadius,
       width: "100%",
       height: "100%",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       cursor: "pointer",
-      border: selected ? "2.5px solid #6366f1" : "1.5px solid rgba(255,255,255,0.15)",
-      transition: "all 0.2s",
-      padding: "1.25rem",
+      border: selected ? "2.5px solid #6366f1" : "1px solid rgba(255,255,255,0.1)",
+      padding: "12px",
       boxSizing: "border-box",
-      boxShadow: frameStyle === "none" ? effectBoxShadow : "none",
-      position: "relative",
-      overflow: "hidden",
+      boxShadow: effectBoxShadow,
+      transition: "all 0.2s",
     }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
       }}>
-      {frameStyle === "none" && renderDecoration()}
-      {renderFrame()}
+      {content}
     </div>
   );
 }

@@ -1,0 +1,31 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 131 186" width="131" height="186">
+	<defs>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(110.899,-78.157,90.915,129.001,63.532,147.463)">
+			<stop offset="0" stop-color="#791256"/>
+			<stop offset=".49" stop-color="#bc1b62"/>
+			<stop offset="1" stop-color="#ff246d"/>
+		</linearGradient>
+		<linearGradient id="g2" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(100.91,101.675,-87.034,86.38,-41.285,208.73)">
+			<stop offset="0" stop-color="#ff246d"/>
+			<stop offset=".51" stop-color="#bc1b62"/>
+			<stop offset="1" stop-color="#791256"/>
+		</linearGradient>
+		<linearGradient id="g3" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-118.058,-128.586,55.602,-51.05,199.789,111.602)">
+			<stop offset="0" stop-color="#791256"/>
+			<stop offset=".49" stop-color="#bc1b62"/>
+			<stop offset="1" stop-color="#ff246d"/>
+		</linearGradient>
+	</defs>
+	<style>
+		.s0 { fill: url(#g1) } 
+		.s1 { fill: url(#g2) } 
+		.s2 { fill: url(#g3) } 
+	</style>
+	<g id="&lt;Group&gt;">
+		<g id="&lt;Group&gt;">
+			<path id="&lt;Path&gt;" class="s0" d="m81.92 0.94q3.68-0.43 7.43-0.56 1.87-0.06 3.73-0.05c33.94 0.25 50.58 41.57 26.58 65.57l-27.27 27.27c0 0-1.99-1.99-20.23-20.23-18.23-18.23-47.36-60.71 3.78-71.14q0.14-0.02 0.28-0.05z"/>
+			<path id="&lt;Path&gt;" class="s1" d="m75.94 1.8c-51.14 10.43-22.01 52.91-3.78 71.14 18.24 18.24 20.23 20.23 20.23 20.23l27.27 27.27c23.98 23.98 7.4 65.29-26.5 65.57q-0.39 0-0.77 0c-51.74 0-93.6-42.33-92.83-94.25 0.66-44.69 33.52-82.22 76.38-89.96z"/>
+			<path id="&lt;Path&gt;" class="s2" d="m12.39 46.26q0 0 0 0c-1.9 60.17 74.36 120.52 115.67 115.98-5.42 13.29-18 23.63-34.9 23.77q-0.39 0-0.77 0c-51.74 0-93.6-42.33-92.83-94.25 0.25-16.53 4.9-32.07 12.83-45.5z"/>
+		</g>
+	</g>
+</svg>

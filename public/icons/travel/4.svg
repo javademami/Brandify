@@ -1,0 +1,17 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 157 152" width="157" height="152">
+	<style>
+		.s0 { fill: #37474f } 
+		.s1 { fill: #263238 } 
+		.s2 { fill: #f06292 } 
+	</style>
+	<g id="&lt;Group&gt;">
+		<g id="&lt;Group&gt;">
+			<path id="&lt;Path&gt;" class="s0" d="m106.54 4.49l-46.76 72.82h-60.43l48.84-76.05z"/>
+			<path id="&lt;Path&gt;" class="s1" d="m76.33 51.54l30.21-47.05-2.96-0.99-55.39-2.24-2.07 3.23z"/>
+			<path id="&lt;Path&gt;" class="s2" d="m157.44 77.31l-48.84-76.05h-60.42l48.84 76.05z"/>
+			<path id="&lt;Path&gt;" class="s0" d="m50.25 150.14l46.77-72.83h60.42l-48.84 76.06z"/>
+			<path id="&lt;Path&gt;" class="s1" d="m80.47 103.09l-27.08 42.17 3.11 3.74 52.1 4.37 2.08-3.23z"/>
+			<path id="&lt;Path&gt;" class="s2" d="m-0.65 77.31l48.84 76.06h60.42l-48.83-76.06z"/>
+		</g>
+	</g>
+</svg>
