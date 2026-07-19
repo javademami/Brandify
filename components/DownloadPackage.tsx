@@ -26,17 +26,14 @@ async function downloadSVG(logo: LogoConfig) {
 
   let inner = "";
   if (layout === "textOnly") {
-    // ✅ تغییر: ${font} → ${fontFamily}
     inner = `<text x="160" y="80" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="48" fill="${textColor}" text-anchor="middle">${name}</text>`;
   } else if (layout === "iconLeft" || layout === "badge") {
     inner = `
       <image href="${iconPath}" x="30" y="36" width="56" height="56" style="${iconFilter}"/>
-      // ✅ تغییر: ${font} → ${fontFamily}
       <text x="100" y="72" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="40" fill="${textColor}">${name}</text>`;
   } else {
     inner = `
       <image href="${iconPath}" x="120" y="16" width="64" height="64" style="${iconFilter}"/>
-      // ✅ تغییر: ${font} → ${fontFamily}
       <text x="160" y="108" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="36" fill="${textColor}" text-anchor="middle">${name}</text>`;
   }
 
