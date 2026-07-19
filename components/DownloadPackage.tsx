@@ -20,7 +20,6 @@ async function downloadPNG(logo: LogoConfig, previewRef: React.RefObject<HTMLDiv
 }
 
 async function downloadSVG(logo: LogoConfig) {
-  // ✅ تغییر: font → fontFamily
   const { name, iconPath, palette, layout, fontFamily, fontWeight, textColor, iconColor } = logo;
   const iconFilter = iconColor === "#ffffff" ? "filter: brightness(0) invert(1)" : "filter: brightness(0)";
 
