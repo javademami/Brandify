@@ -20,20 +20,24 @@ async function downloadPNG(logo: LogoConfig, previewRef: React.RefObject<HTMLDiv
 }
 
 async function downloadSVG(logo: LogoConfig) {
-  const { name, iconPath, palette, layout, font, fontWeight, textColor, iconColor } = logo;
+  // ✅ تغییر: font → fontFamily
+  const { name, iconPath, palette, layout, fontFamily, fontWeight, textColor, iconColor } = logo;
   const iconFilter = iconColor === "#ffffff" ? "filter: brightness(0) invert(1)" : "filter: brightness(0)";
 
   let inner = "";
   if (layout === "textOnly") {
-    inner = `<text x="160" y="80" font-family="${font}" font-weight="${fontWeight}" font-size="48" fill="${textColor}" text-anchor="middle">${name}</text>`;
+    // ✅ تغییر: ${font} → ${fontFamily}
+    inner = `<text x="160" y="80" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="48" fill="${textColor}" text-anchor="middle">${name}</text>`;
   } else if (layout === "iconLeft" || layout === "badge") {
     inner = `
       <image href="${iconPath}" x="30" y="36" width="56" height="56" style="${iconFilter}"/>
-      <text x="100" y="72" font-family="${font}" font-weight="${fontWeight}" font-size="40" fill="${textColor}">${name}</text>`;
+      // ✅ تغییر: ${font} → ${fontFamily}
+      <text x="100" y="72" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="40" fill="${textColor}">${name}</text>`;
   } else {
     inner = `
       <image href="${iconPath}" x="120" y="16" width="64" height="64" style="${iconFilter}"/>
-      <text x="160" y="108" font-family="${font}" font-weight="${fontWeight}" font-size="36" fill="${textColor}" text-anchor="middle">${name}</text>`;
+      // ✅ تغییر: ${font} → ${fontFamily}
+      <text x="160" y="108" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="36" fill="${textColor}" text-anchor="middle">${name}</text>`;
   }
 
   const svg = `<svg width="320" height="120" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg">
