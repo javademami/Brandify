@@ -1,8 +1,8 @@
 "use client";
 
-import { iconPaths } from "@/lib/icons";
 import type { LogoConfig } from "@/lib/generator";
 
+// Icon SVG render function
 function IconSVG({
   name,
   size,
@@ -12,7 +12,8 @@ function IconSVG({
   size: number;
   color: string;
 }) {
-  const path = iconPaths[name];
+  // برای حالا فقط یک icon ساده دایره نمایش دهید
+  // در Brandify، icons از icon folder/SVG استفاده می‌شوند
   return (
     <svg
       width={size}
@@ -21,17 +22,7 @@ function IconSVG({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {path ? (
-        <path
-          d={path}
-          stroke={color}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ) : (
-        <circle cx="12" cy="12" r="8" stroke={color} strokeWidth="1.8" />
-      )}
+      <circle cx="12" cy="12" r="8" stroke={color} strokeWidth="1.8" />
     </svg>
   );
 }
