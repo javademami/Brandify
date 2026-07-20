@@ -1,4 +1,3 @@
-
 "use client";
 import type { LogoConfig } from "@/lib/generator";
  
@@ -207,7 +206,7 @@ export default function LogoFrame({
             />
           )}
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily, fontWeight, color: "#1a1a1a", fontSize: fontSize + 6, fontWeight: "700" }}>
+            <div style={{ fontFamily, color: "#1a1a1a", fontSize: fontSize + 6, fontWeight: "700" }}>
               {name}
             </div>
             {slogan && (
