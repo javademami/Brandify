@@ -30,18 +30,21 @@ function LogoRenderTarget({ logo }: { logo: LogoConfig }) {
       padding: "1rem",
     }}>
       {layout === "textOnly" && (
-        <span style={{ fontFamily: font, fontWeight, fontSize: 28, color: textColor }}>{name}</span>
+        <span style={{ fontFamily: fontFamily, fontWeight, fontSize: 28, color: textColor }}>{name}</span>
+
       )}
       {(layout === "iconTop" || layout === "iconBig") && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <img src={iconPath} width={layout === "iconBig" ? 48 : 36} height={layout === "iconBig" ? 48 : 36} style={{ filter: iconFilter }} alt="" />
-          <span style={{ fontFamily: font, fontWeight, fontSize: 20, color: textColor }}>{name}</span>
+         <span style={{ fontFamily: fontFamily, fontWeight, fontSize: 20, color: textColor }}>{name}</span>
+
         </div>
       )}
       {(layout === "iconLeft" || layout === "badge") && (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src={iconPath} width={36} height={36} style={{ filter: iconFilter }} alt="" />
-          <span style={{ fontFamily: font, fontWeight, fontSize: 22, color: textColor }}>{name}</span>
+         <span style={{ fontFamily: fontFamily, fontWeight, fontSize: 22, color: textColor }}>{name}</span>
+
         </div>
       )}
     </div>
