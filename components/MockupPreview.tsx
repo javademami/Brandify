@@ -69,12 +69,13 @@ function TshirtMockup({ logo }: { logo: LogoConfig }) {
         {logo.layout === "iconLeft" || logo.layout === "badge" ? (
           <>
             <image href={logo.iconPath} x="6" y="9" width="24" height="24" style={{ filter: iconFilter }} />
-            <text x="36" y="27" fontFamily={logo.font} fontWeight={logo.fontWeight} fontSize="13" fill={logo.textColor}>{name.slice(0,8)}</text>
+            <text x="36" y="27" fontFamily={logo.fontFamily} fontWeight={logo.fontWeight} fontSize="13" fill={logo.textColor}>{name.slice(0,8)}</text>
           </>
         ) : (
           <>
             <image href={logo.iconPath} x="33" y="4" width="24" height="24" style={{ filter: iconFilter }} />
-            <text x="45" y="40" fontFamily={logo.font} fontWeight={logo.fontWeight} fontSize="11" fill={logo.textColor} textAnchor="middle">{name.slice(0,10)}</text>
+            <text x="45" y="40" fontFamily={logo.fontFamily}
+ fontWeight={logo.fontWeight} fontSize="11" fill={logo.textColor} textAnchor="middle">{name.slice(0,10)}</text>
           </>
         )}
       </g>
@@ -83,7 +84,8 @@ function TshirtMockup({ logo }: { logo: LogoConfig }) {
 }
 
 function BusinessCardMockup({ logo }: { logo: LogoConfig }) {
-  const { palette, name, slogan, font, fontWeight, textColor, iconPath, iconColor, layout } = logo;
+  const { palette, name, slogan, fontFamily, fontWeight, textColor, iconPath, iconColor, layout } = logo;
+
   const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
   return (
     <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
@@ -95,15 +97,15 @@ function BusinessCardMockup({ logo }: { logo: LogoConfig }) {
       {layout === "iconLeft" || layout === "badge" ? (
         <>
           <image href={iconPath} x="28" y="30" width="36" height="36" style={{ filter: iconFilter }} />
-          <text x="74" y="54" fontFamily={font} fontWeight={fontWeight} fontSize="18" fill={textColor}>{name}</text>
+          <text x="74" y="54" fontFamily={fontFamily} fontWeight={fontWeight} fontSize="18" fill={textColor}>{name}</text>
         </>
       ) : (
         <>
           <image href={iconPath} x="28" y="24" width="36" height="36" style={{ filter: iconFilter }} />
-          <text x="28" y="80" fontFamily={font} fontWeight={fontWeight} fontSize="18" fill={textColor}>{name}</text>
+          <text x="28" y="80" fontFamily={fontFamily} fontWeight={fontWeight} fontSize="18" fill={textColor}>{name}</text>
         </>
       )}
-      {slogan && <text x="28" y="96" fontFamily={font} fontSize="10" fill={textColor} opacity="0.6">{slogan.toUpperCase()}</text>}
+      {slogan && <text x="28" y="96" fontFamily={fontFamily} fontSize="10" fill={textColor} opacity="0.6">{slogan.toUpperCase()}</text>}
       {/* contact lines */}
       <line x1="28" y1="118" x2="292" y2="118" stroke={textColor} strokeWidth="0.5" opacity="0.2"/>
       <text x="28" y="136" fontFamily="sans-serif" fontSize="10" fill={textColor} opacity="0.5">hello@{name.toLowerCase().replace(/\s/g,"")}.com</text>
@@ -114,7 +116,8 @@ function BusinessCardMockup({ logo }: { logo: LogoConfig }) {
 }
 
 function MugMockup({ logo }: { logo: LogoConfig }) {
-  const { palette, name, font, fontWeight, textColor, iconPath, iconColor } = logo;
+  const { palette, name, fontFamily, fontWeight, textColor, iconPath, iconColor } = logo;
+
   const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
   return (
     <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
@@ -126,13 +129,13 @@ function MugMockup({ logo }: { logo: LogoConfig }) {
       <path d="M200 80 Q240 80 240 120 Q240 160 200 160" fill="none" stroke="#d1d5db" strokeWidth="12" strokeLinecap="round"/>
       {/* logo on mug */}
       <image href={iconPath} x="88" y="88" width="64" height="64" style={{ filter: iconFilter }} />
-      <text x="120" y="170" fontFamily={font} fontWeight={fontWeight} fontSize="13" fill={textColor} textAnchor="middle">{name.slice(0,12)}</text>
+      <text x="120" y="170" fontFamily={fontFamily} fontWeight={fontWeight} fontSize="13" fill={textColor} textAnchor="middle">{name.slice(0,12)}</text>
     </svg>
   );
 }
 
 function PhoneMockup({ logo }: { logo: LogoConfig }) {
-  const { palette, name, font, fontWeight, textColor, iconPath, iconColor } = logo;
+  const { palette, name, fontFamily, fontWeight, textColor, iconPath, iconColor } = logo;
   const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
   return (
     <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
@@ -145,7 +148,7 @@ function PhoneMockup({ logo }: { logo: LogoConfig }) {
       {/* app icon style */}
       <rect x="54" y="110" width="72" height="72" rx="16" fill={palette.bg}/>
       <image href={iconPath} x="70" y="122" width="40" height="40" style={{ filter: iconFilter }} />
-      <text x="90" y="205" fontFamily={font} fontWeight={fontWeight} fontSize="11" fill="white" textAnchor="middle" opacity="0.8">{name.slice(0,10)}</text>
+      <text x="90" y="205" fontFamily={fontFamily} fontWeight={fontWeight} fontSize="11" fill="white" textAnchor="middle" opacity="0.8">{name.slice(0,10)}</text>
       {/* home bar */}
       <rect x="65" y="280" width="50" height="4" rx="2" fill="#4b5563"/>
     </svg>
@@ -153,7 +156,7 @@ function PhoneMockup({ logo }: { logo: LogoConfig }) {
 }
 
 function BagMockup({ logo }: { logo: LogoConfig }) {
-  const { palette, name, font, fontWeight, textColor, iconPath, iconColor } = logo;
+  const { palette, name, fontFamily, fontWeight, textColor, iconPath, iconColor } = logo;
   const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
   return (
     <svg viewBox="0 0 240 280" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
@@ -165,7 +168,7 @@ function BagMockup({ logo }: { logo: LogoConfig }) {
       <path d="M80 72 Q80 30 120 30 Q160 30 160 72" fill="none" stroke="#9ca3af" strokeWidth="8" strokeLinecap="round"/>
       {/* logo */}
       <image href={iconPath} x="92" y="120" width="56" height="56" style={{ filter: iconFilter }} />
-      <text x="120" y="196" fontFamily={font} fontWeight={fontWeight} fontSize="14" fill={textColor} textAnchor="middle">{name.slice(0,12)}</text>
+      <text x="120" y="196" fontFamily={fontFamily} fontWeight={fontWeight} fontSize="14" fill={textColor} textAnchor="middle">{name.slice(0,12)}</text>
     </svg>
   );
 }
