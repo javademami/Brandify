@@ -16,7 +16,8 @@ async function logoToDataUrl(logo: LogoConfig): Promise<string> {
 }
 
 function LogoRenderTarget({ logo }: { logo: LogoConfig }) {
-  const { name, slogan, iconPath, palette, layout, font, fontWeight, textColor, iconColor } = logo;
+  const { name, slogan, iconPath, palette, layout, fontFamily, fontWeight, textColor, iconColor } = logo;
+
   const iconFilter = iconColor === "#ffffff" ? "brightness(0) invert(1)" : "brightness(0)";
 
   return (
