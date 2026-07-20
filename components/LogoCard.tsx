@@ -2,31 +2,6 @@
 
 import type { LogoConfig } from "@/lib/generator";
 
-// Icon SVG render function
-function IconSVG({
-  name,
-  size,
-  color,
-}: {
-  name: string;
-  size: number;
-  color: string;
-}) {
-  // برای حالا فقط یک icon ساده دایره نمایش دهید
-  // در Brandify، icons از icon folder/SVG استفاده می‌شوند
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle cx="12" cy="12" r="8" stroke={color} strokeWidth="1.8" />
-    </svg>
-  );
-}
-
 export default function LogoCard({
   logo,
   selected,
@@ -36,7 +11,8 @@ export default function LogoCard({
   selected?: boolean;
   onClick?: () => void;
 }) {
-  const { name, slogan, icon, fontFamily, fontWeight, textColor, iconColor, bgCSS, layout, borderRadius } = logo;
+  const { name, slogan, iconPath, palette, fontFamily, fontWeight, textColor, layout, borderRadius, background } = logo;
+  const bgColor = background?.includes("linear") ? background : (background || palette.bg);
 
   const iconSize = layout === "iconBig" ? 52 : 36;
 
@@ -44,11 +20,11 @@ export default function LogoCard({
     if (layout === "textOnly") {
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <span style={{ fontFamily: fontFamily, fontWeight, color: textColor, fontSize: 22, letterSpacing: "0.04em" }}>
+          <span style={{ fontFamily, fontWeight: fontWeight as any, color: textColor, fontSize: 22, letterSpacing: "0.04em" }}>
             {name}
           </span>
           {slogan && (
-            <span style={{ fontFamily: fontFamily, color: textColor, fontSize: 11, opacity: 0.7, letterSpacing: "0.1em" }}>
+            <span style={{ fontFamily, color: textColor, fontSize: 11, opacity: 0.7, letterSpacing: "0.1em" }}>
               {slogan.toUpperCase()}
             </span>
           )}
@@ -59,13 +35,13 @@ export default function LogoCard({
     if (layout === "iconLeft" || layout === "badge") {
       return (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <IconSVG name={icon} size={iconSize} color={iconColor} />
+          {iconPath && <img src={iconPath} alt="" style={{ width: iconSize, height: iconSize }} />}
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontFamily: fontFamily, fontWeight, color: textColor, fontSize: 18, letterSpacing: "0.02em" }}>
+            <span style={{ fontFamily, fontWeight: fontWeight as any, color: textColor, fontSize: 18, letterSpacing: "0.02em" }}>
               {name}
             </span>
             {slogan && (
-              <span style={{ fontFamily: fontFamily, color: textColor, fontSize: 10, opacity: 0.6, letterSpacing: "0.08em" }}>
+              <span style={{ fontFamily, color: textColor, fontSize: 10, opacity: 0.6, letterSpacing: "0.08em" }}>
                 {slogan.toUpperCase()}
               </span>
             )}
@@ -77,13 +53,13 @@ export default function LogoCard({
     // iconTop or iconBig
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        <IconSVG name={icon} size={iconSize} color={iconColor} />
+        {iconPath && <img src={iconPath} alt="" style={{ width: iconSize, height: iconSize }} />}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-          <span style={{ fontFamily: fontFamily, fontWeight, color: textColor, fontSize: layout === "iconBig" ? 20 : 17, letterSpacing: "0.04em" }}>
+          <span style={{ fontFamily, fontWeight: fontWeight as any, color: textColor, fontSize: layout === "iconBig" ? 20 : 17, letterSpacing: "0.04em" }}>
             {name}
           </span>
           {slogan && (
-            <span style={{ fontFamily: fontFamily, color: textColor, fontSize: 10, opacity: 0.6, letterSpacing: "0.1em" }}>
+            <span style={{ fontFamily, color: textColor, fontSize: 10, opacity: 0.6, letterSpacing: "0.1em" }}>
               {slogan.toUpperCase()}
             </span>
           )}
@@ -96,7 +72,7 @@ export default function LogoCard({
     <div
       onClick={onClick}
       style={{
-        background: bgCSS,
+        background: bgColor,
         borderRadius,
         width: "100%",
         height: 160,
