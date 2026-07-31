@@ -1,5 +1,3 @@
-
-
 import { getPalettesForIndustry, isDark, type Palette } from "./palettes";
 
 export type Layout = "iconTop" | "iconLeft" | "iconBig" | "badge" | "textOnly" | "horizontalBar";
@@ -35,6 +33,7 @@ export interface LogoConfig {
   frameStyle: FrameStyle;
   sloganFont?: string;
   isMonogram?: boolean;
+  isAbstract?: boolean;  // ✅ اضافه شد
 }
 
 const LAYOUTS: Layout[] = ["iconTop", "iconTop", "iconTop", "iconBig", "iconTop", "badge"];
@@ -215,7 +214,7 @@ function getSecondaryFont(): typeof TECH_FONTS[0] {
   return TECH_FONTS[Math.floor(Math.random() * TECH_FONTS.length)];
 }
 
-export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
+export function generateLogos(input: GenerateInput, count = 100): LogoConfig[] {
   const { name, slogan, industry } = input;
   const allPalettes = getPalettesForIndustry(industry, count);
   const folder = getIconFolder(industry);
@@ -285,8 +284,11 @@ export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
     const complementaryFont = getComplementaryFont(fontStyle);
     const sloganFont = complementaryFont.family;
     
-    // 📱 Monogram Logo - فقط 10% (هر 10 لوگو یکی) - متفاوت از frames
-    const isMonogram = frameStyle === "none" && (i % 10 === 3);
+    // ✅ 30% Abstract Logos (هر 10 لوگو: آخر 3 تا Abstract)
+    const isAbstract = i % 10 === 7 || i % 10 === 8 || i % 10 === 9;
+    
+    // 📱 Monogram Logo - فقط 10% (هر 10 لوگو یکی) - متفاوت از frames و abstract
+    const isMonogram = frameStyle === "none" && !isAbstract && (i % 10 === 3);
 
     logos.push({
       name, slogan, iconPath, palette,
@@ -310,6 +312,7 @@ export function generateLogos(input: GenerateInput, count = 48): LogoConfig[] {
       frameStyle,
       sloganFont,
       isMonogram,
+      isAbstract,  // ✅ اضافه شد
     });
   }
   return logos;

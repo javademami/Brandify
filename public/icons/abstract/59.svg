@@ -1,0 +1,13 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 75 50" width="75" height="50">
+	<style>
+		.s0 { fill: #231f20 } 
+	</style>
+	<g id="&lt;Group&gt;">
+		<path id="&lt;Path&gt;" class="s0" d="m27.19 19.03v-15.64l-13.4-3.25v21.86 27.59h13.4z"/>
+		<path id="&lt;Path&gt;" class="s0" d="m50.41 9.01l-12.25-2.97v31.01 12.54h13.4v-6.57-21.71-12.01l-1.13-0.28q-0.01 0-0.02-0.01z"/>
+		<path id="&lt;Path&gt;" class="s0" d="m70.61 13.91l-10.18-2.46v21.86 3.97l13.41-7.61v-14.97l-3.15-0.76q-0.04-0.01-0.08-0.03z"/>
+		<path id="&lt;Path&gt;" class="s0" d="m35.76 36.71v-27.8l-6.17 10.45v27.24z"/>
+		<path id="&lt;Path&gt;" class="s0" d="m58.03 32.95v-18.49l-4.07 7.17v17.42z"/>
+		<path id="&lt;Path&gt;" class="s0" d="m11.39 2.25l-10.84 14.61v16.98l10.84-12.29z"/>
+	</g>
+</svg>
