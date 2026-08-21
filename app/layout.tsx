@@ -1,5 +1,5 @@
-
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs"; // اضافه شد
 import { 
   Geist, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond, 
   Poppins, Raleway, Bebas_Neue, DM_Sans, Outfit, Space_Mono, Syne, 
@@ -52,22 +52,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`
-        ${geistSans.variable} ${geistMono.variable} ${playfair.variable} 
-        ${montserrat.variable} ${cormorant.variable} ${poppins.variable} 
-        ${raleway.variable} ${bebas.variable} ${dmSans.variable} 
-        ${outfit.variable} ${spaceMono.variable} ${syne.variable} 
-        ${cinzel.variable} ${bodoni.variable} ${manrope.variable} 
-        ${caveat.variable} ${tangerine.variable} ${greatVibes.variable} 
-        ${dancing.variable} ${pacifico.variable} ${fredoka.variable} 
-        ${oswald.variable} ${righteous.variable} ${lora.variable} 
-        ${cinzelDeco.variable} ${spaceGrotesk.variable} ${sacramento.variable}
-        h-full antialiased
-      `}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`
+          ${geistSans.variable} ${geistMono.variable} ${playfair.variable} 
+          ${montserrat.variable} ${cormorant.variable} ${poppins.variable} 
+          ${raleway.variable} ${bebas.variable} ${dmSans.variable} 
+          ${outfit.variable} ${spaceMono.variable} ${syne.variable} 
+          ${cinzel.variable} ${bodoni.variable} ${manrope.variable} 
+          ${caveat.variable} ${tangerine.variable} ${greatVibes.variable} 
+          ${dancing.variable} ${pacifico.variable} ${fredoka.variable} 
+          ${oswald.variable} ${righteous.variable} ${lora.variable} 
+          ${cinzelDeco.variable} ${spaceGrotesk.variable} ${sacramento.variable}
+          h-full antialiased
+        `}
+      >
+        <body className="min-h-full flex flex-col">{children}</body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -33,17 +33,17 @@ export interface LogoConfig {
   frameStyle: FrameStyle;
   sloganFont?: string;
   isMonogram?: boolean;
-  isAbstract?: boolean;  // ✅ اضافه شد
+  isAbstract?: boolean;
+  isRestaurant?: boolean;  // ✅ فقط برای Restaurant (30%)
 }
 
-const LAYOUTS: Layout[] = ["iconTop", "iconTop", "iconTop", "iconBig", "iconTop", "badge"];
+const LAYOUTS: Layout[] = ["iconTop", "iconTop", "badge", "iconLeft", "iconBig"];
 const EFFECTS: Effect[] = ["none", "glow", "metallic", "shadow", "neon"];
 const DECORATIONS: Decoration[] = ["none", "circle", "square", "border", "frame"];
 const TEXT_DECORATIONS: TextDecoration[] = ["none", "underline", "overline"];
 const FONT_STYLES: FontStyle[] = ["luxury", "tech", "retro", "playful"];
 const FRAME_STYLES: FrameStyle[] = ["none", "gold-square", "thin-circle", "inner-dashed-circle", "solid-dark-circle", "gradient-block"];
 
-// 🎨 فونت‌های دسته‌بندی شده (مثل Looka)
 const LUXURY_FONTS = [
   { name: "Playfair Display", family: "'Playfair Display', serif", weight: ["400", "700", "900"] },
   { name: "Cormorant Garamond", family: "'Cormorant Garamond', serif", weight: ["400", "600", "700"] },
@@ -147,23 +147,10 @@ const METALLIC_GRADIENTS = [
   "linear-gradient(135deg, #71797e 0%, #b8b8b8 50%, #71797e 100%)",
 ];
 
-// 📏 Letter Spacing Variations (مثل Looka) - کاهش شده
-const LETTER_SPACINGS = [
-  "0px",      // compact
-  "0px",      // tight
-  "0.02em",   // very tight
-  "0.05em",   // tight
-  "0.1em",    // normal
-  "0.15em",   // wide
-];
+const LETTER_SPACINGS = ["0px", "0.05em", "0.05em", "0.1em", "0.15em"];
 
-// 🔤 Text Transform Options
 const TEXT_TRANSFORMS: Array<"uppercase" | "lowercase" | "capitalize" | "none"> = [
-  "uppercase",
-  "uppercase",
-  "uppercase",
-  "capitalize",
-  "none",
+  "uppercase", "uppercase", "uppercase", "capitalize", "none",
 ];
 
 export interface GenerateInput {
@@ -180,38 +167,33 @@ function getPrimaryFont(fontStyle: FontStyle): typeof LUXURY_FONTS[0] {
   return fontList[Math.floor(Math.random() * fontList.length)];
 }
 
-// 🎯 Determine font category (Script vs Serif vs Sans)
+function getOptimalTextColor(bgColor: string): string {
+  const dark = isDark(bgColor);
+  return dark ? "#ffffff" : "#1a1a1a";
+}
+
 function getFontCategory(fontStyle: FontStyle): FontCategory {
-  if (fontStyle === "playful") {
-    return "script"; // Playful = Script fonts (Caveat, Tangerine, etc)
-  } else if (fontStyle === "luxury") {
-    return "serif"; // Luxury = Serif fonts
+  if (fontStyle === "playful") return "script";
+  else if (fontStyle === "luxury") return "serif";
+  else return "sans";
+}
+
+function getBestFontPairing(fontStyle: FontStyle, fontCategory: FontCategory): typeof LUXURY_FONTS[0] {
+  if (fontStyle === "luxury" && fontCategory === "serif") {
+    return LUXURY_FONTS[Math.floor(Math.random() * LUXURY_FONTS.length)];
+  } else if (fontStyle === "tech" && fontCategory === "sans") {
+    return TECH_FONTS[Math.floor(Math.random() * TECH_FONTS.length)];
   } else {
-    return "sans"; // Tech & Retro = Sans fonts
+    return Math.random() > 0.5 ? 
+      TECH_FONTS[Math.floor(Math.random() * TECH_FONTS.length)] :
+      LUXURY_FONTS[Math.floor(Math.random() * LUXURY_FONTS.length)];
   }
 }
 
-// 🎨 Font Pairing - Slogan gets different font than name (فقط Serif یا Sans - بدون Script)
-function getComplementaryFont(fontStyle: FontStyle): typeof LUXURY_FONTS[0] {
-  // Slogan فقط Serif یا Sans استفاده کند
-  const luxurySans = Math.random() > 0.5 ? LUXURY_FONTS : TECH_FONTS;
-  return luxurySans[Math.floor(Math.random() * luxurySans.length)];
-}
-
-// 🧠 Smart Text Transform (Looka logic)
 function getSmartTextTransform(fontCategory: FontCategory): "uppercase" | "lowercase" | "capitalize" | "none" {
-  if (fontCategory === "script") {
-    return "capitalize"; // Script fonts: capitalize (Caveat)
-  } else if (fontCategory === "serif") {
-    return "uppercase"; // Serif fonts: uppercase (Playfair)
-  } else {
-    return "none"; // Sans fonts: NO transform (keep original case)
-  }
-}
-
-function getSecondaryFont(): typeof TECH_FONTS[0] {
-  // Font pairing: serif + sans (مثل Looka)
-  return TECH_FONTS[Math.floor(Math.random() * TECH_FONTS.length)];
+  if (fontCategory === "script") return "capitalize";
+  else if (fontCategory === "serif") return "uppercase";
+  else return "none";
 }
 
 export function generateLogos(input: GenerateInput, count = 100): LogoConfig[] {
@@ -220,45 +202,45 @@ export function generateLogos(input: GenerateInput, count = 100): LogoConfig[] {
   const folder = getIconFolder(industry);
   const logos: LogoConfig[] = [];
 
+  // ✅ فقط برای "Restaurant" استفاده شود
+  const isRestaurantIndustry = industry.trim().toLowerCase() === "restaurant";
+
   for (let i = 0; i < count; i++) {
     const palette = allPalettes[i % allPalettes.length];
     const iconIndex = (i * 7 + Math.floor(i / 3)) % 100 + 1;
     const iconPath = `/icons/${folder}/${iconIndex}.svg`;
     
     const dark = isDark(palette.bg);
-    const textColor = dark ? palette.textLight : palette.textDark;
+    const textColor = getOptimalTextColor(palette.bg);
 
     const layout = LAYOUTS[i % LAYOUTS.length];
     const fontStyle = FONT_STYLES[i % FONT_STYLES.length];
     const fontCategory = getFontCategory(fontStyle);
     
-    // 🎨 Font Pairing Strategy (مثل Looka)
     const primaryFont = getPrimaryFont(fontStyle);
     const primaryWeight = primaryFont.weight[i % primaryFont.weight.length];
     
-    // Use primary for main name, secondary for slogan/subtitle
-    const fontSize = 28 + (i % 6) * 2;  // بیشتر از 24-39 به 28-39
+    const fontSize = 32 + (i % 3) * 2;
     const letterSpacing = LETTER_SPACINGS[i % LETTER_SPACINGS.length];
-    // 🧠 Smart text transform based on font type (Script vs Non-Script)
     const textTransform = getSmartTextTransform(fontCategory);
     
     const borderRadius = BORDER_RADII[(i * 3) % BORDER_RADII.length];
     
-    // 🎨 Frame Style - فقط 15% لوگوها (15 تا از 100)
-    const frameStyle = (i % 7 === 0) ? FRAME_STYLES[Math.floor(i / 7) % FRAME_STYLES.length] : "none";
+    const frameStyle = (i % 7 === 0 && i < 70) ? FRAME_STYLES[Math.floor(i / 7) % FRAME_STYLES.length] : "none";
     
     let background = palette.bg;
-    const useGradient = i % 2 === 0 && dark && frameStyle === "none"; // فقط اگر frame نباشد
-    const useMetallic = i % 5 === 0 && frameStyle === "none"; // فقط اگر frame نباشد
+    const useGradient = i % 3 === 0 && dark && frameStyle === "none";
+    const useMetallic = i % 5 === 0 && dark && frameStyle === "none";
     
-    if (useMetallic && frameStyle === "none") {
+    if (useMetallic && dark && frameStyle === "none") {
       background = METALLIC_GRADIENTS[i % METALLIC_GRADIENTS.length];
-    } else if (useGradient && frameStyle === "none") {
+    } else if (useGradient && dark && frameStyle === "none") {
       background = GRADIENTS[i % GRADIENTS.length];
     }
-    // برای frames: همیشه solid color
 
-    const effect: Effect = EFFECTS[i % EFFECTS.length];
+    const effectChance = i % 3;
+    const effect: Effect = effectChance === 0 ? EFFECTS[i % EFFECTS.length] : "none";
+    
     const canHaveDecoration = layout === "textOnly" && i % 10 === 0;
     const decoration: Decoration = canHaveDecoration ? "border" : "none";
     const textDecoration: TextDecoration = i % 8 === 0 ? TEXT_DECORATIONS[i % TEXT_DECORATIONS.length] : "none";
@@ -280,15 +262,17 @@ export function generateLogos(input: GenerateInput, count = 100): LogoConfig[] {
       iconColor = palette.textDark;
     }
 
-    // 🎨 Slogan Font - مختلف از نام لوگو
-    const complementaryFont = getComplementaryFont(fontStyle);
+    const complementaryFont = getBestFontPairing(fontStyle, fontCategory);
     const sloganFont = complementaryFont.family;
     
-    // ✅ 30% Abstract Logos (هر 10 لوگو: آخر 3 تا Abstract)
+    // 30% Abstract
     const isAbstract = i % 10 === 7 || i % 10 === 8 || i % 10 === 9;
     
-    // 📱 Monogram Logo - فقط 10% (هر 10 لوگو یکی) - متفاوت از frames و abstract
-    const isMonogram = frameStyle === "none" && !isAbstract && (i % 10 === 3);
+    // ✅ 30% Restaurant - فقط برای "Restaurant" industry
+    const isRestaurant = isRestaurantIndustry && (i % 10 === 4 || i % 10 === 5 || i % 10 === 6);
+    
+    // 10% Monogram
+    const isMonogram = frameStyle === "none" && !isAbstract && !isRestaurant && (i % 10 === 3);
 
     logos.push({
       name, slogan, iconPath, palette,
@@ -312,7 +296,8 @@ export function generateLogos(input: GenerateInput, count = 100): LogoConfig[] {
       frameStyle,
       sloganFont,
       isMonogram,
-      isAbstract,  // ✅ اضافه شد
+      isAbstract,
+      isRestaurant,  // ✅
     });
   }
   return logos;

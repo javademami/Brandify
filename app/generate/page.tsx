@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoView from "@/components/LogoView";
 import MonogramLogoView from "@/components/MonogramLogoView";
+import RestaurantLogoView from "@/components/Restaurantlogoview";  // ✅ NEW
 import { generateLogos, type LogoConfig } from "@/lib/generator";
 import { inspoLogos } from "@/lib/inspoLogos";
 
@@ -41,7 +42,6 @@ export default function GeneratePage() {
   const router = useRouter();
   const progress = Math.round((step/7)*100);
 
-  // Intersection Observer برای infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -233,7 +233,10 @@ export default function GeneratePage() {
               {logos.slice(0, displayCount).map((logo,i)=>(
                 <div key={i} className="flex flex-col gap-3">
                   <div style={{ height: "280px", borderRadius: logo.borderRadius, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-                    {logo.isMonogram ? (
+                    {/* ✅ اضافه کردن RestaurantLogoView */}
+                    {logo.isRestaurant ? (
+                      <RestaurantLogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
+                    ) : logo.isMonogram ? (
                       <MonogramLogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
                     ) : (
                       <LogoView logo={logo} selected={selectedLogo===i} onClick={()=>setSelectedLogo(i)} />
