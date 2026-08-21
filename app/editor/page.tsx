@@ -60,7 +60,7 @@ type TransformType =
   | "lowercase"
   | "capitalize";
 
-type ExtendedLogo = LogoConfig & {
+type ExtendedLogo = Omit<LogoConfig, "frameStyle"> & {
   iconSize?: number;
   iconColor?: string;
   iconGap?: number;
@@ -69,7 +69,7 @@ type ExtendedLogo = LogoConfig & {
   iconOffsetX?: number;
   iconOffsetY?: number;
 
-  letterSpacing?: number;
+  letterSpacing?: string;
   lineHeight?: number;
   textTransform?: TransformType;
   nameSloganGap?: number;
@@ -981,21 +981,17 @@ function LogoPreview({
      TEXT ONLY
   ===================================================== */
 
-  if (
-    layout === "textOnly" ||
-    variant === "wordmark"
-  ) {
-    return (
-      <FrameWrapper logo={data}>
-        <div style={rootStyle}>
-          <div style={contentStyle}>
-            {textBlock}
-          </div>
+  if ((variant as string) === "wordmark") {
+  return (
+    <FrameWrapper logo={data}>
+      <div style={rootStyle}>
+        <div style={contentStyle}>
+          {textBlock}
         </div>
-      </FrameWrapper>
-    );
-  }
-
+      </div>
+    </FrameWrapper>
+  );
+}
   /* =====================================================
      HORIZONTAL
   ===================================================== */
@@ -1541,7 +1537,7 @@ function EditorInner() {
             );
 
           if (parsed) {
-            loaded = parsed;
+           loaded = parsed as ExtendedLogo;
           }
         }
 
@@ -1602,12 +1598,10 @@ function EditorInner() {
                     0
                 ),
 
-              letterSpacing:
-                Number(
-                  (loaded as any)
-                    .letterSpacing ??
-                    0
-                ),
+             letterSpacing:
+  `${Number(
+    (loaded as any).letterSpacing ?? 0
+  )}px`,
 
               lineHeight:
                 Number(
@@ -2042,7 +2036,7 @@ function EditorInner() {
         iconOffsetX: 0,
         iconOffsetY: 0,
 
-        letterSpacing: 0,
+       letterSpacing: "0px",
         lineHeight: 1.1,
         textTransform: "none",
         nameSloganGap: 5,
@@ -2136,9 +2130,9 @@ function EditorInner() {
       update({
         fontFamily:
           "'DM Sans', sans-serif",
-        fontWeight: 600,
+        fontWeight: "600",
         fontSize: 32,
-        letterSpacing: 0,
+       letterSpacing: "0",
         lineHeight: 1.1,
         textTransform: "none",
         nameSloganGap: 5,
@@ -3230,8 +3224,7 @@ function EditorInner() {
                             type="button"
                             onClick={() =>
                               update({
-                                fontWeight:
-                                  weight,
+                                 fontWeight: String(weight),
                               })
                             }
                             style={{
@@ -3310,8 +3303,8 @@ function EditorInner() {
                         value
                       ) =>
                         update({
-                          letterSpacing:
-                            value,
+                          
+                           letterSpacing: `${value}px`,
                         })
                       }
                     />
