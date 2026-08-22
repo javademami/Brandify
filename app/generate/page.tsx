@@ -6,6 +6,7 @@ import MonogramLogoView from "@/components/MonogramLogoView";
 import RestaurantLogoView from "@/components/Restaurantlogoview";  // ✅ NEW
 import { generateLogos, type LogoConfig } from "@/lib/generator";
 import { inspoLogos } from "@/lib/inspoLogos";
+import AccountHeader from "@/components/AccountHeader";
 
 const INDUSTRIES = [
   "Technology","AI & Machine Learning","Startup","Crypto & Web3",
@@ -72,10 +73,16 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <span className="font-bold text-lg">Brandify</span>
-        <div className="w-48 h-1 bg-gray-100 rounded-full">
-          <div className="h-1 bg-indigo-500 rounded-full transition-all duration-500" style={{width:`${progress}%`}} />
+      {/* Unified premium navigation header — matches the rest of the app */}
+      <AccountHeader />
+
+      {/* Wizard step progress strip */}
+      <div className="border-b border-gray-100">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2.5 sm:px-8">
+          <span className="text-xs font-medium text-gray-400">Step {step} of 7</span>
+          <div className="h-1 w-40 rounded-full bg-gray-100 sm:w-56">
+            <div className="h-1 rounded-full bg-linear-to-r from-indigo-500 to-violet-500 transition-all duration-500" style={{width:`${progress}%`}} />
+          </div>
         </div>
       </div>
 

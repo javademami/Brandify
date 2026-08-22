@@ -7,6 +7,7 @@ import type { LogoConfig } from "@/lib/generator";
 import { PALETTES } from "@/lib/palettes";
 import LogoSaveButton from "@/components/LogoSaveButton";
 import DownloadTab from "@/components/Downloadtab";
+import AccountHeader from "@/components/AccountHeader";
 
 /* =========================================================
    TYPES
@@ -2216,27 +2217,38 @@ function EditorInner() {
       <div
         style={{
           display: "flex",
-          alignItems:
-            "center",
-          justifyContent:
-            "center",
-          height: "100vh",
+          flexDirection:
+            "column",
+          minHeight: "100vh",
           background:
             "#f8f8f8",
           fontFamily:
             "'DM Sans', sans-serif",
         }}
       >
-        <p
+        <AccountHeader />
+
+        <div
           style={{
-            color:
-              "#4f46e5",
-            fontSize: 14,
-            fontWeight: 600,
+            display: "flex",
+            alignItems:
+              "center",
+            justifyContent:
+              "center",
+            flex: 1,
           }}
         >
-          Loading Brandify Editor...
-        </p>
+          <p
+            style={{
+              color:
+                "#4f46e5",
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            Loading Brandify Editor...
+          </p>
+        </div>
       </div>
     );
   }
@@ -2250,48 +2262,59 @@ function EditorInner() {
       <div
         style={{
           display: "flex",
-          alignItems:
-            "center",
-          justifyContent:
-            "center",
-          height: "100vh",
           flexDirection:
             "column",
-          gap: 16,
+          minHeight: "100vh",
           fontFamily:
             "'DM Sans', sans-serif",
         }}
       >
-        <p
-          style={{
-            color:
-              "#6b7280",
-            fontSize: 15,
-          }}
-        >
-          No logo selected.
-        </p>
+        <AccountHeader />
 
-        <button
-          onClick={() =>
-            router.push(
-              "/generate"
-            )
-          }
+        <div
           style={{
-            background:
-              "#4f46e5",
-            color: "white",
-            border: "none",
-            borderRadius: 10,
-            padding:
-              "10px 24px",
-            cursor: "pointer",
-            fontSize: 14,
+            display: "flex",
+            alignItems:
+              "center",
+            justifyContent:
+              "center",
+            flexDirection:
+              "column",
+            gap: 16,
+            flex: 1,
           }}
         >
-          ← Go back
-        </button>
+          <p
+            style={{
+              color:
+                "#6b7280",
+              fontSize: 15,
+            }}
+          >
+            No logo selected.
+          </p>
+
+          <button
+            onClick={() =>
+              router.push(
+                "/generate"
+              )
+            }
+            style={{
+              background:
+                "#4f46e5",
+              color: "white",
+              border: "none",
+              borderRadius: 10,
+              padding:
+                "10px 24px",
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            ← Go back
+          </button>
+        </div>
       </div>
     );
   }
@@ -2349,6 +2372,12 @@ function EditorInner() {
           "#f7f7f8",
       }}
     >
+      {/* =================================================
+          GLOBAL NAV — unified premium header
+      ================================================= */}
+
+      <AccountHeader />
+
       {/* =================================================
           HEADER
       ================================================= */}
@@ -4977,19 +5006,30 @@ export default function EditorPage() {
         <div
           style={{
             display: "flex",
-            alignItems:
-              "center",
-            justifyContent:
-              "center",
-            height: "100vh",
+            flexDirection:
+              "column",
+            minHeight: "100vh",
             fontFamily:
               "'DM Sans', sans-serif",
-            color:
-              "#6b7280",
-            fontSize: 13,
           }}
         >
-          Loading editor...
+          <AccountHeader />
+
+          <div
+            style={{
+              display: "flex",
+              alignItems:
+                "center",
+              justifyContent:
+                "center",
+              flex: 1,
+              color:
+                "#6b7280",
+              fontSize: 13,
+            }}
+          >
+            Loading editor...
+          </div>
         </div>
       }
     >

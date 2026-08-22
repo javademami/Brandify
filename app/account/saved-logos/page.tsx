@@ -3,14 +3,91 @@
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArrowLeft, Calendar, Palette, Pencil, Sparkles, Trash2 } from "lucide-react";
 import LogoView from "@/components/LogoView";
+import AccountHeader from "@/components/AccountHeader";
+import type { LogoConfig } from "@/lib/generator";
 
 interface SavedLogo {
   _id: string;
   name: string;
   industry: string;
-  logoData: any;
+  logoData: LogoConfig;
   createdAt: string;
+}
+
+/* ---------------------------------------------------------
+   Helpers — keep raw CSS values (e.g. linear-gradient(...))
+   out of the layout by detecting them early.
+--------------------------------------------------------- */
+
+const GRADIENT_RE = /(linear|radial)-gradient\(/i;
+
+function isRawGradient(value?: string): boolean {
+  return typeof value === "string" && GRADIENT_RE.test(value);
+}
+
+function safeDisplayName(name?: string): string {
+  if (!name || !name.trim()) {
+    return "Untitled logo";
+  }
+
+  // Never render a raw CSS string as a title
+  if (isRawGradient(name)) {
+    return "Untitled logo";
+  }
+
+  return name.trim();
+}
+
+/* ---------------------------------------------------------
+   Micro badge — wraps metadata cleanly; gradients become a
+   tiny swatch + "Gradient" label instead of a raw string.
+--------------------------------------------------------- */
+
+function MetaBadge({ value }: { value?: string }) {
+  const text = (value ?? "").trim();
+
+  if (!text) {
+    return null;
+  }
+
+  if (isRawGradient(text)) {
+    return (
+      <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+        <span
+          aria-hidden="true"
+          className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-black/10"
+          style={{ background: text }}
+        />
+        Gradient
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex max-w-full items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+      <span className="truncate">{text}</span>
+    </span>
+  );
+}
+
+/* ---------------------------------------------------------
+   Data loading — lives outside the component so it can be
+   reused by both the initial load and the post-delete
+   refresh without duplicating fetch logic.
+--------------------------------------------------------- */
+
+async function loadLogos(): Promise<SavedLogo[]> {
+  const res = await fetch("/api/logos/my-logos", {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch");
+  }
+
+  return res.json();
 }
 
 export default function SavedLogosPage() {
@@ -26,28 +103,29 @@ export default function SavedLogosPage() {
       return;
     }
 
-    fetchLogos();
-  }, [isSignedIn, router]);
+    // All setState calls happen asynchronously inside promise
+    // callbacks — never synchronously within the effect body.
+    let cancelled = false;
 
-  async function fetchLogos() {
-    try {
-      const res = await fetch("/api/logos/my-logos", {
-        cache: "no-store",
+    loadLogos()
+      .then((data) => {
+        if (!cancelled) {
+          setLogos(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching logos:", error);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch");
-      }
-
-      const data = await res.json();
-
-      setLogos(data);
-    } catch (error) {
-      console.error("Error fetching logos:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, router]);
 
   async function deleteLogo(id: string) {
     if (!confirm("Are you sure you want to delete this logo?")) {
@@ -70,7 +148,7 @@ export default function SavedLogosPage() {
       );
 
       // Sync the list with the database
-      await fetchLogos();
+      setLogos(await loadLogos());
     } catch (error) {
       console.error("Error deleting logo:", error);
       alert("Failed to delete logo. Please try again.");
@@ -82,281 +160,153 @@ export default function SavedLogosPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8f9fa",
-        padding: "20px",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          marginBottom: "40px",
-          paddingTop: "20px",
-        }}
-      >
-        <button
-          onClick={() => router.back()}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "14px",
-            color: "#6b7280",
-            marginBottom: "20px",
-          }}
-        >
-          ← Back
-        </button>
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/60">
+      <AccountHeader active="saved-logos" />
 
-        <h1
-          style={{
-            fontSize: "28px",
-            fontWeight: "700",
-            color: "#111",
-            marginBottom: "10px",
-          }}
-        >
-          Saved Logos
-        </h1>
-
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#6b7280",
-          }}
-        >
-          {logos.length} logo{logos.length !== 1 ? "s" : ""} saved
-        </p>
-      </div>
-
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-        }}
-      >
-        {loading ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "40px",
-              color: "#6b7280",
-            }}
+      <div className="mx-auto max-w-7xl px-5 pb-20 pt-8 sm:px-8">
+        {/* ================= Header ================= */}
+        <header className="mb-10">
+          <button
+            onClick={() => router.back()}
+            className="mb-6 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 transition-colors duration-150 hover:bg-white hover:text-slate-800 hover:shadow-sm"
           >
-            Loading your logos...
-          </div>
-        ) : logos.length === 0 ? (
-          <div
-            style={{
-              background: "white",
-              borderRadius: "12px",
-              padding: "60px 20px",
-              textAlign: "center",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "48px",
-                marginBottom: "20px",
-              }}
-            >
-              🎨
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-indigo-500">
+                Account
+              </p>
+
+              <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
+                Saved Logos
+              </h1>
+
+              <p className="mt-2 text-sm text-slate-500">
+                All your brand marks in one place.
+              </p>
             </div>
 
-            <h2
-              style={{
-                fontSize: "20px",
-                fontWeight: "700",
-                color: "#111",
-                marginBottom: "10px",
-              }}
-            >
+            {!loading && logos.length > 0 && (
+              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-600">
+                {logos.length} logo{logos.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        </header>
+
+        {/* ================= Content ================= */}
+        {loading ? (
+          /* ---------- Loading skeletons ---------- */
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/70 backdrop-blur-sm"
+              >
+                <div className="h-44 animate-pulse bg-slate-200/70" />
+
+                <div className="space-y-3 p-4">
+                  <div className="h-4 w-2/3 animate-pulse rounded-full bg-slate-200/70" />
+                  <div className="h-3 w-1/3 animate-pulse rounded-full bg-slate-200/70" />
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    <div className="h-9 w-9 animate-pulse rounded-lg bg-slate-200/70" />
+                    <div className="h-9 w-9 animate-pulse rounded-lg bg-slate-200/70" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : logos.length === 0 ? (
+          /* ---------- Empty state ---------- */
+          <div className="animate-fade-in-up rounded-3xl border-2 border-dashed border-slate-300/80 bg-white/60 px-6 py-16 text-center backdrop-blur-sm">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25">
+              <Palette className="h-7 w-7" />
+            </div>
+
+            <h2 className="text-lg font-bold text-slate-900">
               No saved logos yet
             </h2>
 
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#6b7280",
-                marginBottom: "20px",
-              }}
-            >
-              Create your first logo and save it here
+            <p className="mx-auto mt-2 max-w-xs text-sm text-slate-500">
+              Create your first logo and save it here.
             </p>
 
             <button
               onClick={() => router.push("/generate")}
-              style={{
-                background: "#6366f1",
-                color: "white",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "600",
-              }}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
             >
+              <Sparkles className="h-4 w-4" />
               Create Logo
             </button>
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            {logos.map((logo) => (
-              <div
+          /* ---------- Logo grid ---------- */
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {logos.map((logo, index) => (
+              <article
                 key={logo._id}
-                style={{
-                  background: "white",
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  boxShadow:
-                    "0 1px 3px rgba(0, 0, 0, 0.1)",
-                  transition: "all 0.2s",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  (
-                    e.currentTarget as HTMLDivElement
-                  ).style.boxShadow =
-                    "0 8px 16px rgba(0, 0, 0, 0.1)";
-
-                  (
-                    e.currentTarget as HTMLDivElement
-                  ).style.transform =
-                    "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  (
-                    e.currentTarget as HTMLDivElement
-                  ).style.boxShadow =
-                    "0 1px 3px rgba(0, 0, 0, 0.1)";
-
-                  (
-                    e.currentTarget as HTMLDivElement
-                  ).style.transform =
-                    "translateY(0)";
-                }}
+                style={{ animationDelay: `${Math.min(index * 60, 480)}ms` }}
+                className="group animate-fade-in-up overflow-hidden rounded-2xl border border-slate-200/80 bg-white/70 shadow-sm backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/10"
               >
-                {/* Logo Preview */}
-                <div
-                  style={{
-                    height: "180px",
-                    overflow: "hidden",
-                  }}
-                >
+                {/* Logo preview */}
+                <div className="h-44 overflow-hidden border-b border-slate-100 bg-slate-50">
                   <LogoView
-                    key={`${logo._id}-${JSON.stringify(
-                      logo.logoData
-                    )}`}
+                    key={`${logo._id}-${JSON.stringify(logo.logoData)}`}
                     logo={logo.logoData}
                   />
                 </div>
 
-                {/* Logo Information */}
-                <div
-                  style={{
-                    padding: "15px",
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      color: "#111",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    {logo.name}
+                {/* Info */}
+                <div className="p-4">
+                  <h3 className="truncate text-sm font-bold text-slate-900">
+                    {safeDisplayName(logo.name)}
                   </h3>
 
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "#6b7280",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {logo.industry}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <MetaBadge value={logo.industry} />
 
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "#9ca3af",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {new Date(
-                      logo.createdAt
-                    ).toLocaleDateString()}
-                  </p>
+                    <span className="inline-flex items-center gap-1 text-[11px] tabular-nums text-slate-400">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(logo.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
 
-                  {/* Buttons */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                    }}
-                  >
+                  {/* Actions */}
+                  <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
                     {/* Edit */}
                     <button
+                      type="button"
+                      title="Edit"
+                      aria-label="Edit logo"
                       onClick={() =>
                         router.push(
                           `/editor?data=${encodeURIComponent(
-                            JSON.stringify(
-                              logo.logoData
-                            )
+                            JSON.stringify(logo.logoData)
                           )}`
                         )
                       }
-                      style={{
-                        flex: 1,
-                        background: "#6366f1",
-                        color: "white",
-                        border: "none",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                      }}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40 active:scale-95"
                     >
-                      Edit
+                      <Pencil className="h-4 w-4" />
                     </button>
 
                     {/* Delete */}
                     <button
-                      onClick={() =>
-                        deleteLogo(logo._id)
-                      }
-                      style={{
-                        flex: 1,
-                        background: "#ef4444",
-                        color: "white",
-                        border: "none",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                      }}
+                      type="button"
+                      title="Delete"
+                      aria-label="Delete logo"
+                      onClick={() => deleteLogo(logo._id)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all duration-150 hover:border-red-300 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 active:scale-95"
                     >
-                      Delete
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}

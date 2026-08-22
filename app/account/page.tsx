@@ -1,8 +1,9 @@
 "use client";
 
-import { useAuth, useUser, UserButton } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import AccountHeader from "@/components/AccountHeader";
 
 export default function AccountPage() {
   const { isSignedIn } = useAuth();
@@ -29,118 +30,9 @@ export default function AccountPage() {
     "U";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #f8f9fc 0%, #f4f5f9 100%)",
-        color: "#111827",
-      }}
-    >
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/60 text-slate-900">
       {/* Top Header */}
-      <header
-        style={{
-          height: "72px",
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid #e5e7eb",
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1180px",
-            height: "100%",
-            margin: "0 auto",
-            padding: "0 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          {/* Brand */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              cursor: "pointer",
-            }}
-            onClick={() => router.push("/")}
-          >
-            <div
-              style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "10px",
-                background:
-                  "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontSize: "17px",
-                fontWeight: 800,
-                boxShadow:
-                  "0 5px 15px rgba(99,102,241,0.25)",
-              }}
-            >
-              B
-            </div>
-
-            <span
-              style={{
-                fontSize: "18px",
-                fontWeight: 750,
-                letterSpacing: "-0.4px",
-                color: "#111827",
-              }}
-            >
-              Brandify
-            </span>
-          </div>
-
-          {/* Right */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <button
-              onClick={() => router.push("/generate")}
-              style={{
-                border: "1px solid #e5e7eb",
-                background: "#fff",
-                color: "#374151",
-                height: "38px",
-                padding: "0 15px",
-                borderRadius: "9px",
-                fontSize: "13px",
-                fontWeight: 650,
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#c7d2fe";
-                e.currentTarget.style.background = "#f8f7ff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e5e7eb";
-                e.currentTarget.style.background = "#fff";
-              }}
-            >
-              + Create Logo
-            </button>
-
-            <UserButton />
-          </div>
-        </div>
-      </header>
+      <AccountHeader active="account" />
 
       {/* Main */}
       <main
@@ -598,11 +490,6 @@ export default function AccountPage() {
             padding-right: 16px !important;
           }
 
-          header > div {
-            padding-left: 16px !important;
-            padding-right: 16px !important;
-          }
-
           main > div:first-of-type {
             grid-template-columns: 1fr !important;
           }
@@ -613,10 +500,6 @@ export default function AccountPage() {
         }
 
         @media (max-width: 520px) {
-          header button {
-            display: none;
-          }
-
           h1 {
             font-size: 28px !important;
           }
