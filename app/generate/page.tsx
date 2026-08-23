@@ -72,7 +72,7 @@ export default function GeneratePage() {
   const filtered = search ? INDUSTRIES.filter(i=>i.toLowerCase().includes(search.toLowerCase())) : INDUSTRIES;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       {/* Unified premium navigation header — matches the rest of the app */}
       <AccountHeader />
 

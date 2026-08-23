@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/ThemeProvider";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const SAMPLE_LOGOS = [
   {
@@ -92,6 +94,7 @@ const STEPS = [
 
 export default function HomePage() {
   const [brandName, setBrandName] = useState("");
+  const { theme } = useTheme();
   const router = useRouter();
 
   function handleStart() {
@@ -99,13 +102,15 @@ export default function HomePage() {
     router.push(`/generate?name=${encodeURIComponent(brandName)}`);
   }
 
+  const isDark = theme === "dark";
+
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#fafafa", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: isDark ? "#0a0a0a" : "#fafafa", minHeight: "100vh" }}>
 
       {/* ── Navbar ── */}
       <nav style={{
-        background: "white",
-        borderBottom: "1px solid #f0f0f0",
+        background: isDark ? "#111" : "white",
+        borderBottom: isDark ? "1px solid #222" : "1px solid #f0f0f0",
         padding: "0 2rem",
         height: 60,
         display: "flex",
@@ -115,12 +120,13 @@ export default function HomePage() {
         top: 0,
         zIndex: 50,
       }}>
-        <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, color: "#111" }}>
+        <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, color: isDark ? "#fff" : "#111" }}>
           Brandify
         </span>
-        <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-          <a href="#how" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>How it works</a>
-          <a href="#logos" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Examples</a>
+        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
+          <a href="#how" style={{ fontSize: 14, color: isDark ? "#9ca3af" : "#555", textDecoration: "none" }}>How it works</a>
+          <a href="#logos" style={{ fontSize: 14, color: isDark ? "#9ca3af" : "#555", textDecoration: "none" }}>Examples</a>
+          <ThemeToggle />
           <Link href="/generate" style={{
             background: "#4f46e5",
             color: "white",

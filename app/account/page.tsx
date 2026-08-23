@@ -30,7 +30,7 @@ export default function AccountPage() {
     "U";
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/60 text-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/60 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/40 dark:text-slate-100">
       {/* Top Header */}
       <AccountHeader active="account" />
 

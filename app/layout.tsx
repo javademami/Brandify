@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs"; // اضافه شد
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { 
   Geist, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond, 
   Poppins, Raleway, Bebas_Neue, DM_Sans, Outfit, Space_Mono, Syne, 
@@ -68,7 +69,27 @@ export default function RootLayout({
           h-full antialiased
         `}
       >
-        <body className="min-h-full flex flex-col">{children}</body>
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  try {
+                    var stored = localStorage.getItem("theme");
+                    if (stored === "dark" || stored === "light") {
+                      document.documentElement.classList.toggle("dark", stored === "dark");
+                    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                      document.documentElement.classList.add("dark");
+                    }
+                  } catch (e) {}
+                })();
+              `,
+            }}
+          />
+        </head>
+        <body className="min-h-full flex flex-col">
+          <ThemeProvider>{children}</ThemeProvider>
+        </body>
       </html>
     </ClerkProvider>
   );
