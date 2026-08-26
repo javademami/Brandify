@@ -9,7 +9,7 @@ import { PALETTES } from "@/lib/palettes";
 import LogoSaveButton from "@/components/LogoSaveButton";
 import DownloadTab from "@/components/Downloadtab";
 import AccountHeader from "@/components/AccountHeader";
-import { useMockupGenerator, MockupStage, MockupControls } from "@/components/DynamicMockupGenerator";
+import { useMockupGenerator, MockupStage, MockupControls, USER_MOCKUPS } from "@/components/DynamicMockupGenerator";
 
 /* =========================================================
    DESIGN CONCEPT — "Spec Sheet"
@@ -249,7 +249,21 @@ function makeIconPath(folder: string, file: string): string {
 }
 
 function clamp(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
   return Math.min(max, Math.max(min, value));
+}
+
+function safeNumber(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function safePixelValue(value: unknown, fallback = 0): string {
+  return `${safeNumber(value, fallback)}px`;
 }
 
 function hexToRgb(hex: string) {
@@ -410,7 +424,7 @@ function FrameWrapper({ children, logo }: { children: React.ReactNode; logo: Ext
   );
 }
 
-function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) {
+function LogoPreview({ logo, scale = 1, transparent = false }: { logo: LogoConfig; scale?: number; transparent?: boolean }) {
   const data = logo as ExtendedLogo;
   const { name, slogan, iconPath, palette, layout, fontFamily, fontSize, fontWeight, background, effect } = data;
 
@@ -423,29 +437,29 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
   const backgroundType = data.backgroundType || "solid";
   const backgroundColor1 = data.backgroundColor1 || safeBackground;
   const backgroundColor2 = data.backgroundColor2 || safeTextColor;
-  const angle = Number(data.backgroundAngle) || 90;
+  const angle = safeNumber(data.backgroundAngle, 90);
 
   let finalBackground = backgroundColor1;
   if (backgroundType === "linear-gradient") finalBackground = `linear-gradient(${angle}deg, ${backgroundColor1}, ${backgroundColor2})`;
   if (backgroundType === "radial-gradient") finalBackground = `radial-gradient(circle, ${backgroundColor1}, ${backgroundColor2})`;
 
-  const size = Number(fontSize) || 32;
-  const iconSize = clamp(Number(data.iconSize) || 64, 30, 120) * scale;
-  const iconGap = Number(data.iconGap ?? 16) * scale;
-  const layoutGap = Number(data.layoutGap ?? 10) * scale;
-  const padding = Number(data.layoutPadding ?? 24) * scale;
-  const layoutScale = Number(data.layoutScale ?? 1);
-  const layoutOffsetX = Number(data.layoutOffsetX ?? 0) * scale;
-  const layoutOffsetY = Number(data.layoutOffsetY ?? 0) * scale;
-  const iconOffsetX = Number(data.iconOffsetX ?? 0) * scale;
-  const iconOffsetY = Number(data.iconOffsetY ?? 0) * scale;
-  const iconRotation = Number(data.iconRotation ?? 0);
-  const iconOpacity = clamp(Number(data.iconOpacity ?? 100) / 100, 0, 1);
-  const letterSpacing = Number(data.letterSpacing ?? 0) * scale;
-  const lineHeight = Number(data.lineHeight ?? 1.1);
-  const nameSloganGap = Number(data.nameSloganGap ?? 5) * scale;
-  const sloganSize = Number(data.sloganFontSize ?? Math.max(9, size * 0.32)) * scale;
-  const sloganWeight = Number(data.sloganFontWeight ?? 500);
+  const size = safeNumber(fontSize, 32);
+  const iconSize = clamp(safeNumber(data.iconSize, 64), 30, 120) * scale;
+  const iconGap = safeNumber(data.iconGap, 16) * scale;
+  const layoutGap = safeNumber(data.layoutGap, 10) * scale;
+  const padding = safeNumber(data.layoutPadding, 24) * scale;
+  const layoutScale = safeNumber(data.layoutScale, 1);
+  const layoutOffsetX = safeNumber(data.layoutOffsetX, 0) * scale;
+  const layoutOffsetY = safeNumber(data.layoutOffsetY, 0) * scale;
+  const iconOffsetX = safeNumber(data.iconOffsetX, 0) * scale;
+  const iconOffsetY = safeNumber(data.iconOffsetY, 0) * scale;
+  const iconRotation = safeNumber(data.iconRotation, 0);
+  const iconOpacity = clamp(safeNumber(data.iconOpacity, 100) / 100, 0, 1);
+  const letterSpacing = safeNumber(data.letterSpacing, 0) * scale;
+  const lineHeight = safeNumber(data.lineHeight, 1.1);
+  const nameSloganGap = safeNumber(data.nameSloganGap, 5) * scale;
+  const sloganSize = safeNumber(data.sloganFontSize, Math.max(9, size * 0.32)) * scale;
+  const sloganWeight = safeNumber(data.sloganFontWeight, 500);
   const alignment = data.alignment || "center";
   const alignmentValue = alignment === "top" ? "flex-start" : alignment === "bottom" ? "flex-end" : "center";
   const transform = getTransform(data.textTransform);
@@ -462,7 +476,7 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
     effect === "neon" ? { textShadow: `0 0 8px ${safeTextColor}99, 0 0 18px ${safeTextColor}55` } : {};
 
   const nameStyle: React.CSSProperties = {
-    fontFamily: safeFont, fontWeight: Number(fontWeight) || 600, fontSize: size * scale * layoutScale,
+    fontFamily: safeFont, fontWeight: safeNumber(fontWeight, 600), fontSize: size * scale * layoutScale,
     color: safeTextColor, lineHeight, letterSpacing, textTransform: transform, whiteSpace: "nowrap", ...textEffect,
   };
 
@@ -473,9 +487,9 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
   };
 
   const rootStyle: React.CSSProperties = {
-    width: "100%", height: "100%", background: finalBackground, borderRadius: data.borderRadius || "16px",
+    width: "100%", height: "100%", background: transparent ? "transparent" : finalBackground, borderRadius: transparent ? 0 : (data.borderRadius || "16px"),
     display: "flex", alignItems: alignmentValue, justifyContent: "center", padding, overflow: "hidden",
-    boxSizing: "border-box", ...effectStyles[effect || "none"],
+    boxSizing: "border-box", ...(transparent ? {} : effectStyles[effect || "none"]),
   };
 
   const contentStyle: React.CSSProperties = {
@@ -510,12 +524,12 @@ function LogoPreview({ logo, scale = 1 }: { logo: LogoConfig; scale?: number }) 
 
   if (variant === "dark") {
     const darkLogo: ExtendedLogo = { ...data, backgroundType: "solid", backgroundColor1: "#111111", background: "#111111", textColor: "#ffffff", sloganColor: "#ffffff", iconColor: "#ffffff" };
-    return <LogoPreview logo={darkLogo as LogoConfig} scale={scale} />;
+    return <LogoPreview logo={darkLogo as LogoConfig} scale={scale} transparent={transparent} />;
   }
 
   if (variant === "light") {
     const lightLogo: ExtendedLogo = { ...data, backgroundType: "solid", backgroundColor1: "#ffffff", background: "#ffffff", textColor: "#111111", sloganColor: "#111111", iconColor: "#111111" };
-    return <LogoPreview logo={lightLogo as LogoConfig} scale={scale} />;
+    return <LogoPreview logo={lightLogo as LogoConfig} scale={scale} transparent={transparent} />;
   }
 
   if (layout === "horizontalBar") {
@@ -747,32 +761,32 @@ function EditorInner() {
         if (!cancelled && loaded) {
           const normalized: ExtendedLogo = {
             ...loaded,
-            iconSize: Number((loaded as any).iconSize ?? 64),
+            iconSize: safeNumber((loaded as any).iconSize, 64),
             iconColor: (loaded as any).iconColor || (loaded as any).textColor || "#111111",
-            iconGap: Number((loaded as any).iconGap ?? 16),
-            iconRotation: Number((loaded as any).iconRotation ?? 0),
-            iconOpacity: Number((loaded as any).iconOpacity ?? 100),
-            iconOffsetX: Number((loaded as any).iconOffsetX ?? 0),
-            iconOffsetY: Number((loaded as any).iconOffsetY ?? 0),
-            letterSpacing: `${Number((loaded as any).letterSpacing ?? 0)}px`,
-            lineHeight: Number((loaded as any).lineHeight ?? 1.1),
+            iconGap: safeNumber((loaded as any).iconGap, 16),
+            iconRotation: safeNumber((loaded as any).iconRotation, 0),
+            iconOpacity: safeNumber((loaded as any).iconOpacity, 100),
+            iconOffsetX: safeNumber((loaded as any).iconOffsetX, 0),
+            iconOffsetY: safeNumber((loaded as any).iconOffsetY, 0),
+            letterSpacing: safePixelValue((loaded as any).letterSpacing, 0),
+            lineHeight: safeNumber((loaded as any).lineHeight, 1.1),
             textTransform: (loaded as any).textTransform || "none",
-            nameSloganGap: Number((loaded as any).nameSloganGap ?? 5),
-            sloganFontSize: Number((loaded as any).sloganFontSize ?? Math.max(9, Number((loaded as any).fontSize ?? 32) * 0.32)),
-            sloganFontWeight: Number((loaded as any).sloganFontWeight ?? 500),
+            nameSloganGap: safeNumber((loaded as any).nameSloganGap, 5),
+            sloganFontSize: safeNumber((loaded as any).sloganFontSize, Math.max(9, safeNumber((loaded as any).fontSize, 32) * 0.32)),
+            sloganFontWeight: safeNumber((loaded as any).sloganFontWeight, 500),
             sloganColor: (loaded as any).sloganColor || (loaded as any).textColor || "#111111",
-            layoutGap: Number((loaded as any).layoutGap ?? 10),
-            layoutPadding: Number((loaded as any).layoutPadding ?? 24),
+            layoutGap: safeNumber((loaded as any).layoutGap, 10),
+            layoutPadding: safeNumber((loaded as any).layoutPadding, 24),
             alignment: (loaded as any).alignment || "center",
-            layoutScale: Number((loaded as any).layoutScale ?? 1),
-            layoutOffsetX: Number((loaded as any).layoutOffsetX ?? 0),
-            layoutOffsetY: Number((loaded as any).layoutOffsetY ?? 0),
+            layoutScale: safeNumber((loaded as any).layoutScale, 1),
+            layoutOffsetX: safeNumber((loaded as any).layoutOffsetX, 0),
+            layoutOffsetY: safeNumber((loaded as any).layoutOffsetY, 0),
             backgroundType: (loaded as any).backgroundType || "solid",
             backgroundColor1: (loaded as any).backgroundColor1 || (loaded as any).background || "#ffffff",
             backgroundColor2: (loaded as any).backgroundColor2 || "#111111",
-            backgroundAngle: Number((loaded as any).backgroundAngle ?? 90),
+            backgroundAngle: safeNumber((loaded as any).backgroundAngle, 90),
             frameStyle: (loaded as any).frameStyle || "none",
-            frameThickness: Number((loaded as any).frameThickness ?? 2),
+            frameThickness: safeNumber((loaded as any).frameThickness, 2),
             frameColor: (loaded as any).frameColor || (loaded as any).textColor || "#111111",
             variant: (loaded as any).variant || "full",
           };
@@ -892,7 +906,7 @@ function EditorInner() {
       return;
     }
     if (activeTab === "typography") {
-      update({ fontFamily: "'DM Sans', sans-serif", fontWeight: "600", fontSize: 32, letterSpacing: "0", lineHeight: 1.1, textTransform: "none", nameSloganGap: 5, sloganFontSize: 10, sloganFontWeight: 500, sloganColor: logo.textColor || "#111111" });
+      update({ fontFamily: "'DM Sans', sans-serif", fontWeight: "600", fontSize: 32, letterSpacing: "0px", lineHeight: 1.1, textTransform: "none", nameSloganGap: 5, sloganFontSize: 10, sloganFontWeight: 500, sloganColor: logo.textColor || "#111111" });
       return;
     }
     if (activeTab === "layout") {
@@ -915,7 +929,8 @@ function EditorInner() {
      The stage's live 3D transform layer applies the perspective. */
   const renderMockupLogo = useCallback(() => {
     if (!logo) return null;
-    return <LogoPreview logo={logo as LogoConfig} />;
+    const mockupLogo: ExtendedLogo = { ...logo, frameStyle: "none" };
+    return <LogoPreview logo={mockupLogo as LogoConfig} transparent />;
   }, [logo]);
 
   if (loading) {
@@ -1024,11 +1039,11 @@ function EditorInner() {
               <MockupStage
                 activeSpec={mockupGenerator.activeSpec}
                 calibration={mockupGenerator.calibration}
+                logoColor={(logo as ExtendedLogo).textColor || (logo as ExtendedLogo).iconColor || "#111111"}
                 renderLogoHTML={renderMockupLogo}
-                variant="dark"
               />
               <p style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", margin: 0, fontFamily: theme.fontMono, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                Live mockup composite · 4:3 stage
+                Live mockup composite · 1:1 PNG stage
               </p>
             </div>
           </main>
@@ -1382,7 +1397,13 @@ function EditorInner() {
             )}
 
             {activeTab === "mockups" && (
-              <MockupControls generator={mockupGenerator} />
+              <MockupControls
+                activeSpec={mockupGenerator.activeSpec}
+                calibration={mockupGenerator.calibration}
+                setCalibration={mockupGenerator.setCalibration}
+                setActiveSpec={mockupGenerator.setActiveSpec}
+                USER_MOCKUPS={USER_MOCKUPS}
+              />
             )}
 
             {activeTab === "downloads" && (

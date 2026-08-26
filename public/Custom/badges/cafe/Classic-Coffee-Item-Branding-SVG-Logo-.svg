@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 🟢 آدرس استاندارد xmlns تصحیح شد تا لودر فرانت‌اَند بتواند متون داینامیک را تزریق کند -->
+<svg xmlns="http://w3.org" viewBox="0 0 400 480" width="100%" height="100%" fill="none">
+  <defs>
+    <path id="slogan-curve-path" d="M 90,412 Q 200,455 310,412" />
+  </defs>
+  
+  <polygon points="200,10 380,115 380,345 200,450 20,345 20,115" stroke="currentColor" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <polygon points="200,22 368,121 368,339 200,438 32,339 32,121" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+  <polygon points="200,30 360,126 360,334 200,430 40,334 40,126" stroke="currentColor" stroke-width="1" fill="none" stroke-linejoin="round"/>
+  
+  <g id="coffee-cup-group" stroke="currentColor" fill="none">
+    <path d="M 188,95 C 183,82 196,73 192,60 C 204,73 193,82 196,95 Z" fill="currentColor" stroke="none"/>
+    <path d="M 208,98 C 203,85 216,76 212,63 C 224,76 213,85 216,98 Z" fill="currentColor" stroke="none"/>
+    <ellipse cx="200" cy="115" rx="44" ry="9" stroke-width="3.5"/>
+    <path d="M 156,115 L 156,175 C 156,202 244,202 244,175 L 244,115" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 236,126 C 241,138 241,160 234,176" stroke-width="1.5"/>
+    <path d="M 244,128 C 268,128 268,164 244,164" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+  
+  <g id="vintage-year-group" stroke="currentColor" stroke-width="1.5">
+    <line x1="75" y1="140" x2="135" y2="140"/><text x="105" y="168" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="currentColor" stroke="none" text-anchor="middle">20</text><line x1="75" y1="178" x2="135" y2="178"/>
+    <line x1="265" y1="140" x2="325" y2="140"/><text x="295" y="168" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="currentColor" stroke="none" text-anchor="middle">26</text><line x1="265" y1="178" x2="325" y2="178"/>
+  </g>
+  
+  <g id="banner-group">
+    <polygon points="5,235 30,220 30,275 5,260 18,247" fill="currentColor" opacity="0.85"/>
+    <polygon points="395,235 370,220 370,275 395,260 382,247" fill="currentColor" opacity="0.85"/>
+    <rect x="18" y="220" width="364" height="55" fill="currentColor"/>
+    <!-- 🟢 نام برند داینامیک که به زیبایی با متد fetch جایگزین خواهد شد -->
+    <text x="200" y="258" font-family="Georgia, serif" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">${logo.name}</text>
+  </g>
+  
+  <g id="coffee-beans-group" stroke="currentColor" fill="none">
+    <path d="M 115,325 Q 145,340 165,343" stroke-width="2" stroke-linecap="round"/><path d="M 285,325 Q 255,340 235,343" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 200,330 C 185,330 180,360 200,380 C 215,380 220,350 200,330 Z" stroke-width="2.5"/><path d="M 200,333 Q 192,355 200,377" stroke-width="1.5"/>
+  </g>
+  
+  <text font-family="Arial, sans-serif" font-size="15" font-weight="600" fill="currentColor" letter-spacing="3" text-transform="uppercase">
+    <!-- 🟢 اسلوگان منحنی داینامیک کامپایل شونده -->
+    <textPath href="#slogan-curve-path" startOffset="50%" text-anchor="middle">${logo.slogan}</textPath>
+  </text>
+</svg>

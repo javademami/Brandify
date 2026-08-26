@@ -1,26 +1,19 @@
 "use client";
 
-/* =========================================================
-   DYNAMIC MOCKUP GENERATOR — "SPEC SHEET" EDITION
-   ----------------------------------------------------------
-   Pure-CSS compositing mockup engine. No canvas libraries.
-   - USER_MOCKUPS acts as the hardcoded calibration sheet.
-   - Built-in developer sliders output paste-ready config.
-   - Logo is injected via renderLogoHTML() — the FULL logo with
-     its background color block, icon and typography.
-   - Live 3D transform controllers (perspective + rotateX/Y/Z)
-     are bound directly into the composited logo layer and the
-     paste-ready config.
-
-   LAYOUT SPLIT (editor integration):
-     <MockupStage />     → central canvas presentation (4:3 stage)
-     <MockupControls />  → right-sidebar calibration tools
-   Both share state through useMockupGenerator().
-   The default export keeps the legacy all-in-one UI.
-========================================================= */
-
-import { useCallback, useMemo, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type ReactElement,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
+import { useSearchParams } from "next/navigation";
 
 /* =========================================================
    TYPES
@@ -32,1070 +25,2567 @@ export type MockupBlendMode =
   | "overlay"
   | "screen";
 
-export interface MockupSpec {
-  /** Stable identifier used for React keys + export snippet */
-  id: string;
-  /** Human-readable label shown in the selector rail */
-  name: string;
-  /** Public-root path of the raw JPEG background */
-  bgUrl: string;
-  /** Vertical anchor of the logo center (% of frame height) */
-  defaultTop: number;
-  /** Horizontal anchor of the logo center (% of frame width) */
-  defaultLeft: number;
-  /** Uniform scale multiplier (1 = natural size) */
-  defaultScale: number;
-  /** Perspective depth in px (smaller = stronger distortion) */
-  defaultPerspective: number;
-  /** X-axis tilt forward/backward (deg) */
-  defaultRotateX: number;
-  /** Y-axis turn left/right (deg) */
-  defaultRotateY: number;
-  /** Z-axis flat rotation (deg) */
-  defaultRotateZ: number;
-  /** Advanced CSS transform chain (3D perspective / rotation / skew) */
-  transformStyle: string;
-  /** Blend mode fusing the logo into the photo's light & texture */
-  mixBlendMode: MockupBlendMode;
-}
+export type MockupContrastMode =
+  | "auto"
+  | "normal"
+  | "light"
+  | "dark";
 
 export interface Calibration {
   top: number;
   left: number;
   scale: number;
-  /** Perspective depth in px (smaller = stronger distortion) */
   perspective: number;
-  /** X-axis tilt forward/backward (deg) */
   rotateX: number;
-  /** Y-axis turn left/right (deg) */
   rotateY: number;
-  /** Z-axis flat rotation (deg) */
   rotateZ: number;
+  opacity: number;
+  contrastMode: MockupContrastMode;
+  shadow: number;
+  outline: number;
 }
 
-interface DynamicMockupGeneratorProps {
-  /**
-   * Renders the FULL logo — icon, typography AND its background
-   * color block — for compositing inside the mockup stage.
-   */
-  renderLogoHTML: () => ReactNode;
+export interface MockupSpec {
+  id: string;
+  name: string;
+  bgUrl: string;
+  folder: number;
+  imageNumber: number;
+
+  defaultTop: number;
+  defaultLeft: number;
+  defaultScale: number;
+  defaultPerspective: number;
+
+  defaultRotateX: number;
+  defaultRotateY: number;
+  defaultRotateZ: number;
+
+  transformStyle: string;
+  mixBlendMode: MockupBlendMode;
+  contrastMode?: MockupContrastMode;
+  defaultOpacity?: number;
 }
 
-interface MockupStageProps {
+export type MockupSetter = (spec: MockupSpec) => void;
+
+export interface UseMockupGeneratorResult {
   activeSpec: MockupSpec;
   calibration: Calibration;
-  renderLogoHTML: () => ReactNode;
-  /** "dark" → clean white border for dark canvases; "light" → subtle rule border */
-  variant?: "dark" | "light";
+
+  setActiveSpec: MockupSetter;
+
+  setCalibration: Dispatch<SetStateAction<Calibration>>;
+
+  resetCalibration: () => void;
+
+  selectMockup: (spec: MockupSpec) => void;
+}
+
+type MockupLogoCSSProperties = CSSProperties & {
+  "--mockup-logo-color"?: string;
+};
+
+/* =========================================================
+   MOCKUP DATABASE
+   2 FOLDERS
+   15 IMAGES EACH
+========================================================= */
+
+export const USER_MOCKUPS: MockupSpec[] = Array.from(
+  { length: 30 },
+  (_, index): MockupSpec => {
+    const folder = Math.floor(index / 15) + 1;
+    const imageNumber = (index % 15) + 1;
+
+    return {
+      id: `folder-${folder}-mockup-${imageNumber}`,
+
+      name: `Mockup ${folder}/${imageNumber}`,
+
+      bgUrl: `/Mockup/${folder}/${imageNumber}.png`,
+
+      folder,
+
+      imageNumber,
+
+      defaultTop: 50,
+
+      defaultLeft: 50,
+
+      defaultScale: 0.65,
+
+      defaultPerspective: 800,
+
+      defaultRotateX: 0,
+
+      defaultRotateY: 0,
+
+      defaultRotateZ: 0,
+
+      transformStyle: "preserve-3d",
+
+      mixBlendMode: "normal",
+
+      contrastMode: "auto",
+
+      defaultOpacity: 1,
+    };
+  },
+);
+
+/* =========================================================
+   SAFE NUMBER
+========================================================= */
+
+function finiteNumber(
+  value: unknown,
+  fallback: number,
+): number {
+  const numberValue =
+    typeof value === "number"
+      ? value
+      : Number(value);
+
+  return Number.isFinite(numberValue)
+    ? numberValue
+    : fallback;
 }
 
 /* =========================================================
-   SPEC SHEET — hardcoded calibration database
-   (fine-tune values here via the built-in dev tools)
+   CALIBRATION SANITIZER
 ========================================================= */
 
-export const USER_MOCKUPS: MockupSpec[] = [
-  {
-    id: "mock-101",
-    name: "Flat Lay / Card",
-    bgUrl: "/Mockup/1/1.jpg",
-    defaultTop: 50,
-    defaultLeft: 50,
-    defaultScale: 0.9,
-    defaultPerspective: 800,
-    defaultRotateX: 0,
-    defaultRotateY: 0,
-    defaultRotateZ: 0,
-    transformStyle: "none",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-102",
-    name: "Angled Print",
-    bgUrl: "/Mockup/1/2.jpg",
-    defaultTop: 48,
-    defaultLeft: 52,
-    defaultScale: 0.82,
-    defaultPerspective: 600,
-    defaultRotateX: 6,
-    defaultRotateY: 0,
-    defaultRotateZ: -7,
-    transformStyle: "perspective(600px) rotateX(6deg) rotateZ(-7deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-103",
-    name: "Tilted Surface",
-    bgUrl: "/Mockup/1/3.jpg",
-    defaultTop: 46,
-    defaultLeft: 50,
-    defaultScale: 0.78,
-    defaultPerspective: 500,
-    defaultRotateX: 14,
-    defaultRotateY: -6,
-    defaultRotateZ: 0,
-    transformStyle: "perspective(500px) rotateX(14deg) rotateY(-6deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-104",
-    name: "Studio Sheet",
-    bgUrl: "/Mockup/1/4.jpg",
-    defaultTop: 52,
-    defaultLeft: 49,
-    defaultScale: 0.88,
-    defaultPerspective: 800,
-    defaultRotateX: 0,
-    defaultRotateY: 0,
-    defaultRotateZ: -2,
-    transformStyle: "rotate(-2deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-201",
-    name: "Laptop Screen",
-    bgUrl: "/Mockup/2/michael-dolejs-YN_BOe5zCYA-unsplash.jpg",
-    defaultTop: 44,
-    defaultLeft: 51,
-    defaultScale: 0.72,
-    defaultPerspective: 900,
-    defaultRotateX: 18,
-    defaultRotateY: -10,
-    defaultRotateZ: 2,
-    transformStyle:
-      "perspective(900px) rotateX(18deg) rotateY(-10deg) rotateZ(2deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-202",
-    name: "Desk Scene",
-    bgUrl: "/Mockup/2/paul-seling-KSNbLx1AWPQ-unsplash.jpg",
-    defaultTop: 55,
-    defaultLeft: 47,
-    defaultScale: 0.85,
-    defaultPerspective: 700,
-    defaultRotateX: 8,
-    defaultRotateY: 0,
-    defaultRotateZ: 0,
-    transformStyle: "perspective(700px) rotateX(8deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-203",
-    name: "Poster Wall",
-    bgUrl: "/Mockup/2/planet-volumes-5rEXSophcxs-unsplash.jpg",
-    defaultTop: 42,
-    defaultLeft: 53,
-    defaultScale: 0.8,
-    defaultPerspective: 800,
-    defaultRotateX: 0,
-    defaultRotateY: 9,
-    defaultRotateZ: -3,
-    transformStyle: "perspective(800px) rotateY(9deg) rotateZ(-3deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-301",
-    name: "Card Stack",
-    bgUrl: "/Mockup/3/jakub-zerdzicki-jSQCLQA99Og-unsplash.jpg",
-    defaultTop: 47,
-    defaultLeft: 50,
-    defaultScale: 0.75,
-    defaultPerspective: 550,
-    defaultRotateX: 22,
-    defaultRotateY: 0,
-    defaultRotateZ: 4,
-    transformStyle: "perspective(550px) rotateX(22deg) rotateZ(4deg)",
-    mixBlendMode: "normal",
-  },
-  {
-    id: "mock-302",
-    name: "Device Frame",
-    bgUrl: "/Mockup/3/mockupnest-com-z1Hq3zufiW8-unsplash.jpg",
-    defaultTop: 45,
-    defaultLeft: 49,
-    defaultScale: 0.68,
-    defaultPerspective: 1000,
-    defaultRotateX: 12,
-    defaultRotateY: -14,
-    defaultRotateZ: 0,
-    transformStyle:
-      "perspective(1000px) rotateX(12deg) rotateY(-14deg) skewX(-2deg)",
-    mixBlendMode: "normal",
-  },
-];
+export function sanitizeCalibration(
+  calibration?: Partial<Calibration> | null,
+): Calibration {
+  return {
+    top: finiteNumber(
+      calibration?.top,
+      50,
+    ),
+
+    left: finiteNumber(
+      calibration?.left,
+      50,
+    ),
+
+    scale: finiteNumber(
+      calibration?.scale,
+      0.65,
+    ),
+
+    perspective: finiteNumber(
+      calibration?.perspective,
+      800,
+    ),
+
+    rotateX: finiteNumber(
+      calibration?.rotateX,
+      0,
+    ),
+
+    rotateY: finiteNumber(
+      calibration?.rotateY,
+      0,
+    ),
+
+    rotateZ: finiteNumber(
+      calibration?.rotateZ,
+      0,
+    ),
+
+    opacity: Math.min(
+      1,
+      Math.max(
+        0,
+        finiteNumber(
+          calibration?.opacity,
+          1,
+        ),
+      ),
+    ),
+
+    contrastMode:
+      calibration?.contrastMode === "light" ||
+      calibration?.contrastMode === "dark" ||
+      calibration?.contrastMode === "normal"
+        ? calibration.contrastMode
+        : "auto",
+
+    shadow: Math.min(
+      1,
+      Math.max(
+        0,
+        finiteNumber(
+          calibration?.shadow,
+          0.7,
+        ),
+      ),
+    ),
+
+    outline: Math.min(
+      1,
+      Math.max(
+        0,
+        finiteNumber(
+          calibration?.outline,
+          0.35,
+        ),
+      ),
+    ),
+  };
+}
 
 /* =========================================================
-   DESIGN TOKENS — engineering blueprint palette
+   DEFAULT CALIBRATION
 ========================================================= */
 
-/* Harmonized with the editor's "Spec Sheet" blueprint palette */
-const MONO_FONT =
-  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace";
+function getDefaultCalibration(
+  spec: MockupSpec,
+): Calibration {
+  return sanitizeCalibration({
+    top: spec.defaultTop,
 
-const PAPER = "#FBFAF7";      // document background
-const BLUE_DEEP = "#0C1E30";  // drafting dark — output block
-const INK = "#161A1F";
-const INK_SOFT = "#585C63";
-const INK_FAINT = "#9A9C97";
-const RULE = "#E3E0D6";
-const ACCENT = "#FF6A39";     // hi-vis marker orange
-const ACCENT_DEEP = "#D8501E";
-const ACCENT_SOFT = "#FFE9DE";
+    left: spec.defaultLeft,
+
+    scale: spec.defaultScale,
+
+    perspective:
+      spec.defaultPerspective,
+
+    rotateX:
+      spec.defaultRotateX,
+
+    rotateY:
+      spec.defaultRotateY,
+
+    rotateZ:
+      spec.defaultRotateZ,
+
+    opacity:
+      spec.defaultOpacity ?? 1,
+
+    contrastMode:
+      spec.contrastMode ?? "auto",
+
+    shadow: 0.7,
+
+    outline: 0.35,
+  });
+}
 
 /* =========================================================
-   MICRO COMPONENTS
+   FOLDER LOGO COLOR
 ========================================================= */
 
-/** Ruled horizontal divider with an optional mono caption */
-function RuledLine({ label }: { label?: string }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        userSelect: "none",
-      }}
-      aria-hidden="true"
-    >
-      <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "1.4px", color: INK_FAINT, fontFamily: MONO_FONT, whiteSpace: "nowrap" }}>
-        {label}
-      </span>
-      <span style={{ flex: 1, height: 1, background: RULE }} />
-    </div>
+export function getLogoColorForFolder(
+  folder: number,
+): string {
+  return folder === 1
+    ? "#111111"
+    : "#FFFFFF";
+}
+
+/* =========================================================
+   FOLDER LOGO MODE
+========================================================= */
+
+function getFolderLogoMode(
+  folder: number,
+): MockupContrastMode {
+  return folder === 1
+    ? "dark"
+    : "light";
+}
+
+/* =========================================================
+   LOGO ELEMENT TYPES
+========================================================= */
+
+interface LogoElementProps {
+  style?: CSSProperties;
+  children?: ReactNode;
+  color?: string;
+  fill?: string;
+  stroke?: string;
+}
+
+/* =========================================================
+   APPLY LOGO COLOR TO RENDERED REACT NODE
+========================================================= */
+
+function applyLogoColorToNode(
+  node: ReactNode,
+  logoColor: string,
+): ReactNode {
+  return Children.map(
+    node,
+    (child) => {
+      if (!isValidElement(child)) {
+        return child;
+      }
+
+      const element =
+        child as ReactElement<LogoElementProps>;
+
+      const existingStyle =
+        element.props.style ?? {};
+
+      const elementType =
+        typeof element.type ===
+        "string"
+          ? element.type.toLowerCase()
+          : "";
+
+      const isSvgElement =
+        elementType === "svg" ||
+        elementType === "path" ||
+        elementType === "g" ||
+        elementType === "circle" ||
+        elementType === "ellipse" ||
+        elementType === "rect" ||
+        elementType === "line" ||
+        elementType === "polyline" ||
+        elementType === "polygon" ||
+        elementType === "text" ||
+        elementType === "tspan" ||
+        elementType === "use" ||
+        elementType === "symbol";
+
+      const colorStyle: CSSProperties = {
+        color:
+          "var(--mockup-logo-color)",
+      };
+
+      if (isSvgElement) {
+        colorStyle.fill =
+          "var(--mockup-logo-color)";
+
+        colorStyle.stroke =
+          "var(--mockup-logo-color)";
+      }
+
+      const mergedStyle: MockupLogoCSSProperties =
+        {
+          ...existingStyle,
+
+          ...colorStyle,
+
+          "--mockup-logo-color":
+            logoColor,
+        };
+
+      const transformedChildren =
+        element.props.children !==
+        undefined
+          ? applyLogoColorToNode(
+              element.props.children,
+              logoColor,
+            )
+          : undefined;
+
+      return cloneElement(
+        element,
+        {
+          style: mergedStyle,
+          color: logoColor,
+          ...(isSvgElement
+            ? {
+                fill: logoColor,
+                stroke: logoColor,
+              }
+            : {}),
+          ...(transformedChildren !==
+          undefined
+            ? {
+                children:
+                  transformedChildren,
+              }
+            : {}),
+        },
+      );
+    },
   );
 }
 
-/** Blueprint corner ticks around the preview stage */
+/* =========================================================
+   COLORED LOGO
+========================================================= */
+
+function ColoredLogo({
+  logoColor,
+  renderLogoHTML,
+}: {
+  logoColor: string;
+  renderLogoHTML: () => ReactNode;
+}) {
+  const renderedLogo =
+    renderLogoHTML();
+
+  return (
+    <span
+      aria-hidden="true"
+      style={
+        {
+          "--mockup-logo-color":
+            logoColor,
+
+          color:
+            "var(--mockup-logo-color)",
+
+          fill:
+            "var(--mockup-logo-color)",
+
+          stroke:
+            "var(--mockup-logo-color)",
+
+          display:
+            "inline-block",
+
+          lineHeight:
+            0,
+
+          width:
+            "max-content",
+
+          maxWidth:
+            "100%",
+        } as MockupLogoCSSProperties
+      }
+    >
+      {applyLogoColorToNode(
+        renderedLogo,
+        logoColor,
+      )}
+    </span>
+  );
+}
+
+/* =========================================================
+   CUSTOM HOOK
+========================================================= */
+
+export function useMockupGenerator(
+  userMockups: MockupSpec[] = USER_MOCKUPS,
+): UseMockupGeneratorResult {
+  const database =
+    Array.isArray(userMockups) &&
+    userMockups.length > 0
+      ? userMockups
+      : USER_MOCKUPS;
+
+  const initialSpec =
+    database[0] ??
+    USER_MOCKUPS[0];
+
+  const [activeSpecState, setActiveSpecState] =
+    useState<MockupSpec>(
+      initialSpec,
+    );
+
+  const [calibrations, setCalibrations] =
+    useState<
+      Record<string, Calibration>
+    >(() => ({
+      [initialSpec.id]:
+        getDefaultCalibration(
+          initialSpec,
+        ),
+    }));
+
+  const calibration =
+    calibrations[
+      activeSpecState.id
+    ] ??
+    getDefaultCalibration(
+      activeSpecState,
+    );
+
+  const setCalibration: Dispatch<
+    SetStateAction<Calibration>
+  > = useCallback(
+    (value) => {
+      setCalibrations(
+        (previous) => {
+          const current =
+            previous[
+              activeSpecState.id
+            ] ??
+            getDefaultCalibration(
+              activeSpecState,
+            );
+
+          const next =
+            typeof value === "function"
+              ? value(current)
+              : value;
+
+          return {
+            ...previous,
+
+            [activeSpecState.id]:
+              sanitizeCalibration(
+                next,
+              ),
+          };
+        },
+      );
+    },
+    [activeSpecState],
+  );
+
+  const resetCalibration =
+    useCallback(() => {
+      setCalibrations(
+        (previous) => ({
+          ...previous,
+
+          [activeSpecState.id]:
+            getDefaultCalibration(
+              activeSpecState,
+            ),
+        }),
+      );
+    }, [activeSpecState]);
+
+  const selectMockup =
+    useCallback(
+      (spec: MockupSpec) => {
+        if (!spec) {
+          return;
+        }
+
+        setActiveSpecState(
+          spec,
+        );
+
+        setCalibrations(
+          (previous) => {
+            if (previous[spec.id]) {
+              return previous;
+            }
+
+            return {
+              ...previous,
+
+              [spec.id]:
+                getDefaultCalibration(
+                  spec,
+                ),
+            };
+          },
+        );
+      },
+      [],
+    );
+
+  const setActiveSpec =
+    useCallback(
+      (spec: MockupSpec) => {
+        selectMockup(spec);
+      },
+      [selectMockup],
+    );
+
+  const safeCalibration =
+    useMemo(
+      () =>
+        sanitizeCalibration(
+          calibration,
+        ),
+      [
+        calibration.top,
+        calibration.left,
+        calibration.scale,
+        calibration.perspective,
+        calibration.rotateX,
+        calibration.rotateY,
+        calibration.rotateZ,
+        calibration.opacity,
+        calibration.contrastMode,
+        calibration.shadow,
+        calibration.outline,
+      ],
+    );
+
+  return {
+    activeSpec:
+      activeSpecState,
+
+    calibration:
+      safeCalibration,
+
+    setActiveSpec,
+
+    setCalibration,
+
+    resetCalibration,
+
+    selectMockup,
+  };
+}
+
+/* =========================================================
+   STAGE TYPES
+========================================================= */
+
+export interface MockupStageProps {
+  activeSpec: MockupSpec;
+
+  calibration?: Calibration | null;
+
+  logoColor?: string;
+
+  renderLogoHTML: () => ReactNode;
+}
+
+/* =========================================================
+   COLORS
+========================================================= */
+
+const MONO_FONT =
+  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace";
+
+const PAPER =
+  "#FBFAF7";
+
+const BLUE_DEEP =
+  "#0C1E30";
+
+const INK =
+  "#161A1F";
+
+const INK_SOFT =
+  "#585C63";
+
+const INK_FAINT =
+  "#9A9C97";
+
+const RULE =
+  "#E3E0D6";
+
+const ACCENT =
+  "#FF6A39";
+
+const ACCENT_DEEP =
+  "#D8501E";
+
+const ACCENT_SOFT =
+  "#FFE9DE";
+
+/* =========================================================
+   CORNER TICKS
+========================================================= */
+
 function CornerTicks() {
   const tick: CSSProperties = {
-    position: "absolute",
+    position:
+      "absolute",
+
     width: 14,
+
     height: 14,
-    borderColor: ACCENT,
-    borderStyle: "solid",
+
+    borderColor:
+      ACCENT,
+
+    borderStyle:
+      "solid",
+
     borderWidth: 0,
+
     opacity: 0.85,
-    pointerEvents: "none",
-    zIndex: 3,
+
+    pointerEvents:
+      "none",
+
+    zIndex: 10,
   };
+
   return (
     <>
-      <span style={{ ...tick, top: -1, left: -1, borderTopWidth: 2, borderLeftWidth: 2 }} />
-      <span style={{ ...tick, top: -1, right: -1, borderTopWidth: 2, borderRightWidth: 2 }} />
-      <span style={{ ...tick, bottom: -1, left: -1, borderBottomWidth: 2, borderLeftWidth: 2 }} />
-      <span style={{ ...tick, bottom: -1, right: -1, borderBottomWidth: 2, borderRightWidth: 2 }} />
+      <span
+        style={{
+          ...tick,
+
+          top: -1,
+
+          left: -1,
+
+          borderTopWidth: 2,
+
+          borderLeftWidth: 2,
+        }}
+      />
+
+      <span
+        style={{
+          ...tick,
+
+          top: -1,
+
+          right: -1,
+
+          borderTopWidth: 2,
+
+          borderRightWidth: 2,
+        }}
+      />
+
+      <span
+        style={{
+          ...tick,
+
+          bottom: -1,
+
+          left: -1,
+
+          borderBottomWidth: 2,
+
+          borderLeftWidth: 2,
+        }}
+      />
+
+      <span
+        style={{
+          ...tick,
+
+          bottom: -1,
+
+          right: -1,
+
+          borderBottomWidth: 2,
+
+          borderRightWidth: 2,
+        }}
+      />
     </>
   );
 }
 
-/** Industrial range slider */
-function CalibSlider({
-  label,
-  unit,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  unit: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          fontFamily: MONO_FONT,
-        }}
-      >
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "1.2px", color: INK_SOFT }}>
-          {label}
-        </span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: ACCENT_DEEP }}>
-          {Number.isInteger(step) ? value.toFixed(0) : value.toFixed(2)}
-          <span style={{ color: INK_FAINT, marginLeft: 2 }}>{unit}</span>
-        </span>
-      </div>
-
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="dmg-range"
-        aria-label={label}
-        style={{
-          width: "100%",
-          height: 18,
-          margin: 0,
-          cursor: "ew-resize",
-          accentColor: ACCENT,
-        }}
-      />
-    </div>
-  );
-}
-
 /* =========================================================
-   SHARED STATE HOOK
-   ----------------------------------------------------------
-   Holds the active plate + calibration. Both MockupStage and
-   MockupControls consume it so the center and sidebar always
-   stay in sync.
+   CONTRAST FILTER
+   Folder color is the source of truth.
 ========================================================= */
 
-export function useMockupGenerator() {
-  const [activeId, setActiveId] = useState<string>(USER_MOCKUPS[0].id);
-  const [calibration, setCalibration] = useState<Calibration>({
-    top: USER_MOCKUPS[0].defaultTop,
-    left: USER_MOCKUPS[0].defaultLeft,
-    scale: USER_MOCKUPS[0].defaultScale,
-    perspective: USER_MOCKUPS[0].defaultPerspective,
-    rotateX: USER_MOCKUPS[0].defaultRotateX,
-    rotateY: USER_MOCKUPS[0].defaultRotateY,
-    rotateZ: USER_MOCKUPS[0].defaultRotateZ,
-  });
-  const [copied, setCopied] = useState(false);
+function getContrastFilter(
+  logoColor: string,
+  shadow = 0.7,
+  outline = 0.35,
+): string {
+  const isDarkLogo =
+    logoColor === "#111111";
 
-  const activeSpec = useMemo(
-    () => USER_MOCKUPS.find((m) => m.id === activeId) ?? USER_MOCKUPS[0],
-    [activeId]
-  );
+  if (isDarkLogo) {
+    const outlineAlpha =
+      Math.min(
+        0.8,
+        0.18 +
+          outline * 0.5,
+      );
 
-  const activeIndex = useMemo(
-    () => USER_MOCKUPS.findIndex((m) => m.id === activeId),
-    [activeId]
-  );
+    const shadowAlpha =
+      Math.min(
+        0.45,
+        shadow * 0.35,
+      );
 
-  /** Seamless swap: load the new spec's defaults instantly */
-  const selectMockup = useCallback((spec: MockupSpec) => {
-    setActiveId(spec.id);
-    setCalibration({
-      top: spec.defaultTop,
-      left: spec.defaultLeft,
-      scale: spec.defaultScale,
-      perspective: spec.defaultPerspective,
-      rotateX: spec.defaultRotateX,
-      rotateY: spec.defaultRotateY,
-      rotateZ: spec.defaultRotateZ,
-    });
-    setCopied(false);
-  }, []);
-
-  const resetCalibration = useCallback(() => {
-    setCalibration({
-      top: activeSpec.defaultTop,
-      left: activeSpec.defaultLeft,
-      scale: activeSpec.defaultScale,
-      perspective: activeSpec.defaultPerspective,
-      rotateX: activeSpec.defaultRotateX,
-      rotateY: activeSpec.defaultRotateY,
-      rotateZ: activeSpec.defaultRotateZ,
-    });
-  }, [activeSpec]);
-
-  /** Paste-ready TS fragment for USER_MOCKUPS */
-  const calibratedSnippet = useMemo(() => {
-    /* Live 3D matrix built straight from the sidebar controllers */
-    const liveTransform =
-      `perspective(${calibration.perspective}px) ` +
-      `rotateX(${calibration.rotateX}deg) ` +
-      `rotateY(${calibration.rotateY}deg) ` +
-      `rotateZ(${calibration.rotateZ}deg)`;
     return [
-      `{`,
-      `  id: "${activeSpec.id}",`,
-      `  name: "${activeSpec.name}",`,
-      `  bgUrl: "${activeSpec.bgUrl}",`,
-      `  defaultTop: ${calibration.top.toFixed(1)},`,
-      `  defaultLeft: ${calibration.left.toFixed(1)},`,
-      `  defaultScale: ${calibration.scale.toFixed(2)},`,
-      `  transformStyle: "${liveTransform}",`,
-      `  mixBlendMode: "${activeSpec.mixBlendMode}",`,
-      `}`,
-    ].join("\n");
-  }, [activeSpec, calibration]);
+      `drop-shadow(0 0 1px rgba(255,255,255,${outlineAlpha}))`,
+      `drop-shadow(0 1px 2px rgba(0,0,0,${shadowAlpha}))`,
+    ].join(" ");
+  }
 
-  const copySnippet = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(calibratedSnippet);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard unavailable — ignore silently */
-    }
-  }, [calibratedSnippet]);
+  const outlineAlpha =
+    Math.min(
+      0.95,
+      0.35 +
+        outline * 0.8,
+    );
 
-  return {
-    activeId,
-    calibration,
-    setCalibration,
-    copied,
-    activeSpec,
-    activeIndex,
-    totalCount: USER_MOCKUPS.length,
-    selectMockup,
-    resetCalibration,
-    calibratedSnippet,
-    copySnippet,
-  };
+  const shadowAlpha =
+    Math.min(
+      0.9,
+      0.25 +
+        shadow * 0.65,
+    );
+
+  return [
+    `drop-shadow(0 0 1px rgba(0,0,0,${outlineAlpha}))`,
+    `drop-shadow(0 1px 2px rgba(0,0,0,${shadowAlpha}))`,
+    `drop-shadow(0 -1px 1px rgba(0,0,0,${shadowAlpha * 0.55}))`,
+  ].join(" ");
 }
 
-export type MockupGenerator = ReturnType<typeof useMockupGenerator>;
-
 /* =========================================================
-   MOCKUP STAGE — central canvas presentation
-   ----------------------------------------------------------
-   The spacious 4:3 live composite. Opaque #ffffff container
-   with a clean border so the JPEG edges never bleed into the
-   dark blueprint backdrop.
+   PRESENTATION STAGE
 ========================================================= */
 
 export function MockupStage({
   activeSpec,
   calibration,
   renderLogoHTML,
-  variant = "dark",
 }: MockupStageProps) {
-  /* Live logo layer — composited over the JPEG via advanced CSS.
-     The 3D matrix (perspective + rotateX/Y/Z) is driven by the
-     sidebar controllers so the user gets full creative control. */
-  const logoLayerStyle: CSSProperties = {
-    position: "absolute",
-    top: `${calibration.top}%`,
-    left: `${calibration.left}%`,
-    width: "38%",
-    aspectRatio: "2 / 1",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    /* Anchor by center, then apply the live 3D transform chain */
-    transform:
-      `translate(-50%, -50%) scale(${calibration.scale}) ` +
-      `perspective(${calibration.perspective}px) ` +
-      `rotateX(${calibration.rotateX}deg) ` +
-      `rotateY(${calibration.rotateY}deg) ` +
-      `rotateZ(${calibration.rotateZ}deg)`,
-    transformOrigin: "center center",
-    transformStyle: "preserve-3d",
-    mixBlendMode: activeSpec.mixBlendMode,
-    pointerEvents: "none",
-    zIndex: 2,
-    willChange: "transform",
-  };
+  const safeCalibration =
+    useMemo(
+      () =>
+        sanitizeCalibration(
+          calibration,
+        ),
+      [
+        calibration?.top,
+        calibration?.left,
+        calibration?.scale,
+        calibration?.perspective,
+        calibration?.rotateX,
+        calibration?.rotateY,
+        calibration?.rotateZ,
+        calibration?.opacity,
+        calibration?.contrastMode,
+        calibration?.shadow,
+        calibration?.outline,
+      ],
+    );
 
-  const stageStyle: CSSProperties =
-    variant === "dark"
-      ? {
-          /* Contrasts beautifully against theme.blueDeep blueprint */
-          border: "2px solid rgba(255,255,255,0.18)",
-          borderRadius: 12,
-          boxShadow: "0 24px 70px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)",
-        }
-      : {
-          border: `1px solid ${RULE}`,
-          borderRadius: 10,
-          boxShadow: "0 10px 30px rgba(17, 24, 39, 0.08)",
-        };
+  const effectiveLogoColor =
+    getLogoColorForFolder(
+      activeSpec.folder,
+    );
+
+  const folderLogoMode =
+    getFolderLogoMode(
+      activeSpec.folder,
+    );
+
+  const logoTransform =
+    useMemo(() => {
+      return [
+        "translate(-50%, -50%)",
+
+        `scale(${safeCalibration.scale})`,
+
+        `perspective(${safeCalibration.perspective}px)`,
+
+        `rotateX(${safeCalibration.rotateX}deg)`,
+
+        `rotateY(${safeCalibration.rotateY}deg)`,
+
+        `rotateZ(${safeCalibration.rotateZ}deg)`,
+      ].join(" ");
+    }, [safeCalibration]);
+
+  const safeTop =
+    safeCalibration.top;
+
+  const safeLeft =
+    safeCalibration.left;
 
   return (
     <div
       style={{
-        position: "relative",
-        width: "100%",
-        aspectRatio: "4 / 3",
-        backgroundColor: "#ffffff",
-        overflow: "hidden",
-        ...stageStyle,
+        position:
+          "relative",
+
+        width:
+          "100%",
+
+        height:
+          "100%",
+
+        minHeight:
+          0,
+
+        display:
+          "flex",
+
+        alignItems:
+          "center",
+
+        justifyContent:
+          "center",
+
+        padding:
+          20,
+
+        boxSizing:
+          "border-box",
       }}
     >
-      <style>{`
-        @keyframes dmg-fade-in {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-      `}</style>
-
-      <CornerTicks />
-
-      {/* Raw JPEG plate — keyed for seamless crossfade */}
-      <img
-        key={activeSpec.bgUrl}
-        src={activeSpec.bgUrl}
-        alt={activeSpec.name}
-        draggable={false}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          animation: "dmg-fade-in 0.35s ease both",
-          userSelect: "none",
-        }}
-      />
-
-      {/* Live logo composite layer */}
-      <div style={logoLayerStyle}>{renderLogoHTML()}</div>
-
-      {/* Technical metadata overlay */}
       <div
         style={{
-          position: "absolute",
-          left: 10,
-          bottom: 8,
-          zIndex: 3,
-          display: "flex",
-          gap: 10,
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: "1px",
-          color: "rgba(17, 24, 39, 0.55)",
-          textShadow: "0 1px 0 rgba(255,255,255,0.8)",
-          pointerEvents: "none",
+          position:
+            "relative",
+
+          width:
+            "100%",
+
+          maxWidth:
+            900,
+
+          aspectRatio:
+            "1 / 1",
+
+          overflow:
+            "hidden",
+
+          background:
+            "#ffffff",
+
+          borderRadius:
+            12,
+
+          boxShadow:
+            "0 24px 70px rgba(0,0,0,0.25)",
+
+          border:
+            "1px solid rgba(0,0,0,0.06)",
+
+          isolation:
+            "isolate",
         }}
       >
-        <span>ID:{activeSpec.id.toUpperCase()}</span>
-        <span>BLEND:{activeSpec.mixBlendMode.toUpperCase()}</span>
-        <span>T:{calibration.top.toFixed(1)}%</span>
-        <span>L:{calibration.left.toFixed(1)}%</span>
-        <span>S:{calibration.scale.toFixed(2)}×</span>
-        <span>P:{calibration.perspective}px</span>
-        <span>RX:{calibration.rotateX.toFixed(0)}°</span>
-        <span>RY:{calibration.rotateY.toFixed(0)}°</span>
-        <span>RZ:{calibration.rotateZ.toFixed(0)}°</span>
-      </div>
-    </div>
-  );
-}
+        <CornerTicks />
 
-/* =========================================================
-   PLATE RAIL — 01 to 09 mockup item selectors
-========================================================= */
+        <img
+          src={
+            activeSpec.bgUrl
+          }
+          alt={
+            activeSpec.name
+          }
+          draggable={
+            false
+          }
+          style={{
+            position:
+              "absolute",
 
-export function MockupPlateRail({
-  activeId,
-  onSelect,
-}: {
-  activeId: string;
-  onSelect: (spec: MockupSpec) => void;
-}) {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))",
-        gap: 8,
-      }}
-      role="listbox"
-      aria-label="Mockup plates"
-    >
-      {USER_MOCKUPS.map((spec, i) => {
-        const isActive = spec.id === activeId;
-        return (
-          <button
-            key={spec.id}
-            role="option"
-            aria-selected={isActive}
-            onClick={() => onSelect(spec)}
-            className="dmg-rail-item"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: `1px solid ${isActive ? ACCENT : RULE}`,
-              background: isActive ? ACCENT_SOFT : "#ffffff",
-              color: isActive ? ACCENT_DEEP : INK_SOFT,
-              cursor: "pointer",
-              textAlign: "left",
-              minWidth: 0,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                opacity: 0.65,
-                flexShrink: 0,
-              }}
-            >
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.3px",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {spec.name}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+            inset:
+              0,
 
-/* =========================================================
-   CALIBRATION CONSOLE — TOP / LEFT / SCALE + live 3D matrix
-   (perspective + rotateX / rotateY / rotateZ)
-========================================================= */
+            width:
+              "100%",
 
-function MockupCalibrationConsole({
-  calibration,
-  onChange,
-  onReset,
-}: {
-  calibration: Calibration;
-  onChange: (patch: Partial<Calibration>) => void;
-  onReset: () => void;
-}) {
-  return (
-    <>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <CalibSlider
-          label="TOP"
-          unit="%"
-          value={calibration.top}
-          min={0}
-          max={100}
-          step={0.5}
-          onChange={(top) => onChange({ top })}
+            height:
+              "100%",
+
+            objectFit:
+              "cover",
+
+            display:
+              "block",
+
+            pointerEvents:
+              "none",
+
+            userSelect:
+              "none",
+          }}
         />
-        <CalibSlider
-          label="LEFT"
-          unit="%"
-          value={calibration.left}
-          min={0}
-          max={100}
-          step={0.5}
-          onChange={(left) => onChange({ left })}
-        />
-        <CalibSlider
-          label="SCALE"
-          unit="×"
-          value={calibration.scale}
-          min={0.2}
-          max={2.5}
-          step={0.01}
-          onChange={(scale) => onChange({ scale })}
-        />
-        <CalibSlider
-          label="PERSPECTIVE"
-          unit="px"
-          value={calibration.perspective}
-          min={200}
-          max={2000}
-          step={10}
-          onChange={(perspective) => onChange({ perspective })}
-        />
-        <CalibSlider
-          label="ROTATE X"
-          unit="deg"
-          value={calibration.rotateX}
-          min={-90}
-          max={90}
-          step={1}
-          onChange={(rotateX) => onChange({ rotateX })}
-        />
-        <CalibSlider
-          label="ROTATE Y"
-          unit="deg"
-          value={calibration.rotateY}
-          min={-90}
-          max={90}
-          step={1}
-          onChange={(rotateY) => onChange({ rotateY })}
-        />
-        <CalibSlider
-          label="ROTATE Z"
-          unit="deg"
-          value={calibration.rotateZ}
-          min={-180}
-          max={180}
-          step={1}
-          onChange={(rotateZ) => onChange({ rotateZ })}
-        />
-      </div>
 
-      <button
-        type="button"
-        onClick={onReset}
-        className="dmg-rail-item"
-        style={{
-          alignSelf: "flex-start",
-          fontFamily: MONO_FONT,
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: "1.2px",
-          color: INK_SOFT,
-          background: "transparent",
-          border: `1px solid ${RULE}`,
-          borderRadius: 6,
-          padding: "5px 10px",
-          cursor: "pointer",
-        }}
-      >
-        ↺ RESET TO SPEC DEFAULTS
-      </button>
-    </>
-  );
-}
+        <div
+          key={`${activeSpec.id}-${effectiveLogoColor}`}
+          data-logo-mode={
+            folderLogoMode
+          }
+          data-logo-color={
+            effectiveLogoColor
+          }
+          style={
+            {
+              "--mockup-logo-color":
+                effectiveLogoColor,
 
-/* =========================================================
-   OUTPUT BLOCK — black paste-ready code box
-========================================================= */
+              position:
+                "absolute",
 
-function MockupOutputBlock({
-  snippet,
-  copied,
-  onCopy,
-}: {
-  snippet: string;
-  copied: boolean;
-  onCopy: () => void;
-}) {
-  return (
-    <div
-      style={{
-        position: "relative",
-        background: BLUE_DEEP,
-        borderRadius: 10,
-        padding: "12px 12px 12px",
-        overflow: "hidden",
-      }}
-    >
-      <pre
-        style={{
-          margin: 0,
-          fontFamily: MONO_FONT,
-          fontSize: 10,
-          lineHeight: 1.65,
-          color: "rgba(245, 244, 239, 0.92)",
-          whiteSpace: "pre",
-          overflowX: "auto",
-        }}
-      >
-        {snippet}
-      </pre>
+              top:
+                `${safeTop}%`,
 
-      <button
-        type="button"
-        onClick={onCopy}
-        className="dmg-rail-item"
-        style={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          fontFamily: MONO_FONT,
-          fontSize: 8,
-          fontWeight: 700,
-          letterSpacing: "1px",
-          color: copied ? "#7EE2B8" : "#FFB59E",
-          background: "rgba(255,255,255,0.08)",
-          border: "1px solid rgba(255,255,255,0.16)",
-          borderRadius: 5,
-          padding: "4px 8px",
-          cursor: "pointer",
-        }}
-      >
-        {copied ? "✓ COPIED" : "COPY"}
-      </button>
-    </div>
-  );
-}
+              left:
+                `${safeLeft}%`,
 
-/* =========================================================
-   MOCKUP CONTROLS — right-sidebar calibration tools
-   ----------------------------------------------------------
-   Plate selectors + sliders + reset + output code block,
-   styled to slot into the editor's right control panel.
-========================================================= */
+              transform:
+                logoTransform,
 
-export function MockupControls({ generator }: { generator: MockupGenerator }) {
-  const {
-    activeId,
-    calibration,
-    copied,
-    selectMockup,
-    setCalibration,
-    resetCalibration,
-    calibratedSnippet,
-    copySnippet,
-  } = generator;
+              transformOrigin:
+                "center center",
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      {/* Scoped slider + rail chrome */}
-      <style>{`
-        .dmg-range::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 14px;
-          height: 14px;
-          border-radius: 2px;
-          background: ${ACCENT};
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 0 1px ${ACCENT};
-          cursor: ew-resize;
-          transition: transform 0.12s ease;
-        }
-        .dmg-range::-webkit-slider-thumb:hover { transform: scale(1.25); }
-        .dmg-range::-moz-range-thumb {
-          width: 14px;
-          height: 14px;
-          border-radius: 2px;
-          background: ${ACCENT};
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 0 1px ${ACCENT};
-          cursor: ew-resize;
-        }
-        .dmg-rail-item { transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
-      `}</style>
+              color:
+                "var(--mockup-logo-color)",
 
-      {/* ── PLATE INDEX — mockup item selectors ── */}
-      <div style={{ paddingBottom: 18, borderBottom: `1px solid ${RULE}` }}>
-        <RuledLine label="PLATE INDEX" />
-        <div style={{ marginTop: 12 }}>
-          <MockupPlateRail activeId={activeId} onSelect={selectMockup} />
-        </div>
-      </div>
+              fill:
+                "var(--mockup-logo-color)",
 
-      {/* ── CALIBRATION — TOP / LEFT / SCALE ── */}
-      <div style={{ paddingBottom: 18, borderBottom: `1px solid ${RULE}` }}>
-        <RuledLine label="CALIBRATION // LIVE" />
-        <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 16 }}>
-          <MockupCalibrationConsole
-            calibration={calibration}
-            onChange={(patch) => setCalibration((c) => ({ ...c, ...patch }))}
-            onReset={resetCalibration}
+              stroke:
+                "var(--mockup-logo-color)",
+
+              mixBlendMode:
+                activeSpec.mixBlendMode,
+
+              opacity:
+                safeCalibration.opacity,
+
+              filter:
+                getContrastFilter(
+                  effectiveLogoColor,
+                  safeCalibration.shadow,
+                  safeCalibration.outline,
+                ),
+
+              pointerEvents:
+                "none",
+
+              userSelect:
+                "none",
+
+              zIndex:
+                5,
+            } as MockupLogoCSSProperties
+          }
+        >
+          <ColoredLogo
+            logoColor={
+              effectiveLogoColor
+            }
+            renderLogoHTML={
+              renderLogoHTML
+            }
           />
         </div>
-      </div>
 
-      {/* ── OUTPUT — black code block ── */}
-      <div>
-        <RuledLine label="OUTPUT // PASTE INTO USER_MOCKUPS" />
-        <div style={{ marginTop: 14 }}>
-          <MockupOutputBlock snippet={calibratedSnippet} copied={copied} onCopy={copySnippet} />
-        </div>
-        <p
-          style={{
-            margin: "12px 0 0",
-            fontSize: 9,
-            lineHeight: 1.7,
-            letterSpacing: "0.4px",
-            color: INK_FAINT,
-          }}
-        >
-          DRAG SLIDERS OVER THE LIVE PLATE, THEN COPY THE BLOCK ABOVE AND
-          REPLACE THE MATCHING ENTRY IN <strong>USER_MOCKUPS</strong>.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   MAIN COMPONENT — legacy all-in-one UI
-   ----------------------------------------------------------
-   Kept for backward compatibility: composes the same parts in
-   the original single-section layout (stage left, console right).
-========================================================= */
-
-export default function DynamicMockupGenerator({
-  renderLogoHTML,
-}: DynamicMockupGeneratorProps) {
-  const g = useMockupGenerator();
-  const { activeSpec, calibration } = g;
-
-  return (
-    <section
-      style={{
-        fontFamily: MONO_FONT,
-        background: PAPER,
-        border: `1px solid ${RULE}`,
-        borderRadius: 16,
-        overflow: "hidden",
-        color: INK,
-      }}
-    >
-      {/* Scoped keyframes + slider chrome */}
-      <style>{`
-        @keyframes dmg-fade-in {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        .dmg-range::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 14px;
-          height: 14px;
-          border-radius: 2px;
-          background: ${ACCENT};
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 0 1px ${ACCENT};
-          cursor: ew-resize;
-          transition: transform 0.12s ease;
-        }
-        .dmg-range::-webkit-slider-thumb:hover { transform: scale(1.25); }
-        .dmg-range::-moz-range-thumb {
-          width: 14px;
-          height: 14px;
-          border-radius: 2px;
-          background: ${ACCENT};
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 0 1px ${ACCENT};
-          cursor: ew-resize;
-        }
-        .dmg-rail-item { transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
-      `}</style>
-
-      {/* ═══════════ HEADER — document title block ═══════════ */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          padding: "14px 18px",
-          borderBottom: `1px solid ${RULE}`,
-          background: "#ffffff",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-          <span
-            style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: "1px",
-              color: "#1A0E08",
-              background: ACCENT,
-              padding: "3px 7px",
-              borderRadius: 4,
-            }}
-          >
-            MOCKUP
-          </span>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.6px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            DYNAMIC MOCKUP GENERATOR
-          </h3>
-        </div>
-
-        <span
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "1.2px",
-            color: INK_FAINT,
-            whiteSpace: "nowrap",
-          }}
-        >
-          SHEET {String(g.activeIndex + 1).padStart(2, "0")} /{" "}
-          {String(g.totalCount).padStart(2, "0")}
-        </span>
-      </header>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 264px",
-          gap: 0,
-        }}
-      >
-        {/* ═══════════ LEFT — PREVIEW STAGE + PLATE RAIL ═══════════ */}
         <div
           style={{
-            padding: 18,
-            borderRight: `1px solid ${RULE}`,
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            minWidth: 0,
+            position:
+              "absolute",
+
+            left:
+              16,
+
+            bottom:
+              16,
+
+            padding:
+              "6px 12px",
+
+            background:
+              BLUE_DEEP,
+
+            color:
+              "#ffffff",
+
+            borderRadius:
+              4,
+
+            fontFamily:
+              MONO_FONT,
+
+            fontSize:
+              10,
+
+            fontWeight:
+              600,
+
+            letterSpacing:
+              "0.05em",
+
+            zIndex:
+              20,
+
+            pointerEvents:
+              "none",
           }}
         >
-          <RuledLine label="FIG. A — COMPOSITED OUTPUT" />
-
-          <MockupStage
-            activeSpec={activeSpec}
-            calibration={calibration}
-            renderLogoHTML={renderLogoHTML}
-            variant="light"
-          />
-
-          <RuledLine label="PLATE INDEX" />
-          <MockupPlateRail activeId={g.activeId} onSelect={g.selectMockup} />
+          LIVE_RENDER //
+          {" "}
+          {String(
+            activeSpec.bgUrl ??
+              "",
+          ).toUpperCase()}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* ═══════════ RIGHT — CALIBRATION CONSOLE ═══════════ */}
-        <aside
+/* =========================================================
+   CONTROLS TYPES
+========================================================= */
+
+export interface MockupControlsProps {
+  activeSpec: MockupSpec;
+
+  calibration?: Calibration | null;
+
+  setCalibration: Dispatch<
+    SetStateAction<Calibration>
+  >;
+
+  setActiveSpec:
+    MockupSetter;
+
+  USER_MOCKUPS:
+    MockupSpec[];
+}
+
+/* =========================================================
+   SMALL UI
+========================================================= */
+
+function RuledLine({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <div
+      style={{
+        display:
+          "flex",
+
+        alignItems:
+          "center",
+
+        gap:
+          10,
+
+        userSelect:
+          "none",
+      }}
+      aria-hidden="true"
+    >
+      <span
+        style={{
+          fontSize:
+            9,
+
+          fontWeight:
+            700,
+
+          letterSpacing:
+            "1.4px",
+
+          color:
+            INK_FAINT,
+
+          fontFamily:
+            MONO_FONT,
+
+          whiteSpace:
+            "nowrap",
+        }}
+      >
+        {label}
+      </span>
+
+      <span
+        style={{
+          flex:
+            1,
+
+          height:
+            1,
+
+          background:
+            RULE,
+        }}
+      />
+    </div>
+  );
+}
+
+/* =========================================================
+   SLIDER
+========================================================= */
+
+interface CalibrationSliderProps {
+  label: string;
+
+  value: number;
+
+  min: number;
+
+  max: number;
+
+  step?: number;
+
+  suffix?: string;
+
+  onChange:
+    (value: number) => void;
+}
+
+function CalibrationSlider({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  suffix = "",
+  onChange,
+}: CalibrationSliderProps) {
+  const safeValue =
+    finiteNumber(
+      value,
+      min,
+    );
+
+  return (
+    <label
+      style={{
+        display:
+          "flex",
+
+        flexDirection:
+          "column",
+
+        gap:
+          6,
+
+        fontFamily:
+          MONO_FONT,
+
+        fontSize:
+          11,
+
+        color:
+          INK,
+      }}
+    >
+      <span
+        style={{
+          display:
+            "flex",
+
+          justifyContent:
+            "space-between",
+
+          alignItems:
+            "center",
+
+          gap:
+            10,
+        }}
+      >
+        <span>
+          {label}
+        </span>
+
+        <strong
           style={{
-            padding: 18,
-            background: "#ffffff",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            minWidth: 0,
+            color:
+              ACCENT_DEEP,
+
+            fontSize:
+              10,
+
+            fontWeight:
+              700,
           }}
         >
-          <RuledLine label="CALIBRATION // LIVE" />
+          {safeValue}
+          {suffix}
+        </strong>
+      </span>
 
-          <MockupCalibrationConsole
-            calibration={g.calibration}
-            onChange={(patch) => g.setCalibration((c) => ({ ...c, ...patch }))}
-            onReset={g.resetCalibration}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeValue}
+        onChange={(
+          event,
+        ) => {
+          const nextValue =
+            Number(
+              event.target
+                .value,
+            );
+
+          if (
+            Number.isFinite(
+              nextValue,
+            )
+          ) {
+            onChange(
+              nextValue,
+            );
+          }
+        }}
+        style={{
+          width:
+            "100%",
+
+          cursor:
+            "pointer",
+
+          accentColor:
+            ACCENT,
+        }}
+      />
+    </label>
+  );
+}
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+function folderLabel(
+  folder: number,
+  imageNumber: number,
+) {
+  return `FOLDER ${folder} · ${imageNumber}.PNG`;
+}
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+export function MockupControls({
+  activeSpec,
+  calibration,
+  setCalibration,
+  setActiveSpec,
+  USER_MOCKUPS,
+}: MockupControlsProps) {
+  const searchParams =
+    useSearchParams();
+
+  const isDevMode =
+    searchParams.get(
+      "dev",
+    ) === "true";
+
+  const safeCalibration =
+    useMemo(
+      () =>
+        sanitizeCalibration(
+          calibration,
+        ),
+      [
+        calibration?.top,
+        calibration?.left,
+        calibration?.scale,
+        calibration?.perspective,
+        calibration?.rotateX,
+        calibration?.rotateY,
+        calibration?.rotateZ,
+        calibration?.opacity,
+        calibration?.contrastMode,
+        calibration?.shadow,
+        calibration?.outline,
+      ],
+    );
+
+  const updateCalibration =
+    useCallback(
+      <
+        K extends keyof Calibration
+      >(
+        key: K,
+        value: Calibration[K],
+      ) => {
+        setCalibration(
+          (previous) => {
+            const previousSafe =
+              sanitizeCalibration(
+                previous,
+              );
+
+            if (
+              key ===
+              "contrastMode"
+            ) {
+              const nextMode: MockupContrastMode =
+                value ===
+                  "light" ||
+                value ===
+                  "dark" ||
+                value ===
+                  "normal"
+                  ? value
+                  : "auto";
+
+              return {
+                ...previousSafe,
+
+                contrastMode:
+                  nextMode,
+              };
+            }
+
+            const numericValue =
+              finiteNumber(
+                value,
+                previousSafe[
+                  key
+                ] as number,
+              );
+
+            return {
+              ...previousSafe,
+
+              [key]:
+                numericValue,
+            };
+          },
+        );
+      },
+      [setCalibration],
+    );
+
+  const copyConfigCode =
+    useCallback(
+      async () => {
+        const snippet = `{
+  defaultTop: ${safeCalibration.top},
+  defaultLeft: ${safeCalibration.left},
+  defaultScale: ${safeCalibration.scale},
+  defaultPerspective: ${safeCalibration.perspective},
+  defaultRotateX: ${safeCalibration.rotateX},
+  defaultRotateY: ${safeCalibration.rotateY},
+  defaultRotateZ: ${safeCalibration.rotateZ},
+  opacity: ${safeCalibration.opacity},
+  contrastMode: "${getFolderLogoMode(activeSpec.folder)}",
+}`;
+
+        try {
+          await navigator.clipboard.writeText(
+            snippet,
+          );
+
+          window.alert(
+            "Configuration copied.",
+          );
+        } catch {
+          window.alert(
+            "Copy failed.",
+          );
+        }
+      },
+      [
+        safeCalibration,
+        activeSpec.folder,
+      ],
+    );
+
+  const mockups: MockupSpec[] =
+    Array.isArray(
+      USER_MOCKUPS,
+    ) &&
+    USER_MOCKUPS.length > 0
+      ? USER_MOCKUPS
+      : [];
+
+  const folders =
+    [1, 2];
+
+  const [
+    selectedFolder,
+    setSelectedFolder,
+  ] = useState<number>(
+    activeSpec?.folder ||
+      1,
+  );
+
+  const visibleMockups =
+    mockups.filter(
+      (spec) =>
+        spec.folder ===
+        selectedFolder,
+    );
+
+  const handleSelect =
+    useCallback(
+      (spec: MockupSpec) => {
+        setSelectedFolder(
+          spec.folder,
+        );
+
+        setActiveSpec(
+          spec,
+        );
+      },
+      [setActiveSpec],
+    );
+
+  return (
+    <aside
+      style={{
+        height:
+          "100%",
+
+        minHeight:
+          0,
+
+        background:
+          PAPER,
+
+        borderLeft:
+          `1px solid ${RULE}`,
+
+        padding:
+          24,
+
+        boxSizing:
+          "border-box",
+
+        display:
+          "flex",
+
+        flexDirection:
+          "column",
+
+        gap:
+          24,
+
+        overflowY:
+          "auto",
+      }}
+    >
+      <div>
+        <span
+          style={{
+            display:
+              "inline-flex",
+
+            alignItems:
+              "center",
+
+            gap:
+              6,
+
+            fontFamily:
+              MONO_FONT,
+
+            fontSize:
+              10,
+
+            fontWeight:
+              600,
+
+            letterSpacing:
+              "0.09em",
+
+            color:
+              INK_SOFT,
+          }}
+        >
+          <span
+            style={{
+              width:
+                5,
+
+              height:
+                5,
+
+              borderRadius:
+                1,
+
+              background:
+                ACCENT,
+            }}
           />
 
-          <RuledLine label="OUTPUT // PASTE INTO USER_MOCKUPS" />
+          REAL-WORLD PREVIEW
+        </span>
 
-          <MockupOutputBlock
-            snippet={g.calibratedSnippet}
-            copied={g.copied}
-            onCopy={g.copySnippet}
-          />
+        <h3
+          style={{
+            fontSize:
+              20,
+
+            fontWeight:
+              700,
+
+            color:
+              INK,
+
+            margin:
+              "6px 0 0",
+          }}
+        >
+          Live Brand
+        </h3>
+
+        <p
+          style={{
+            fontSize:
+              13,
+
+            color:
+              INK_SOFT,
+
+            margin:
+              "6px 0 0",
+
+            lineHeight:
+              1.6,
+          }}
+        >
+          Preview your logo on
+          real-world materials
+          and commercial items.
+        </p>
+      </div>
+
+      <RuledLine
+        label="SELECT MOCKUP FOLDER"
+      />
+
+      <div
+        style={{
+          display:
+            "grid",
+
+          gridTemplateColumns:
+            "repeat(2, minmax(0, 1fr))",
+
+          gap:
+            8,
+        }}
+      >
+        {folders.map(
+          (folder) => {
+            const active =
+              selectedFolder ===
+              folder;
+
+            return (
+              <button
+                key={folder}
+                type="button"
+                onClick={() =>
+                  setSelectedFolder(
+                    folder,
+                  )
+                }
+                style={{
+                  padding:
+                    "10px 8px",
+
+                  borderRadius:
+                    8,
+
+                  border:
+                    `1px solid ${
+                      active
+                        ? ACCENT
+                        : RULE
+                    }`,
+
+                  background:
+                    active
+                      ? ACCENT_SOFT
+                      : "#F2F0EA",
+
+                  color:
+                    active
+                      ? ACCENT_DEEP
+                      : INK,
+
+                  cursor:
+                    "pointer",
+
+                  fontFamily:
+                    MONO_FONT,
+
+                  fontSize:
+                    10,
+
+                  fontWeight:
+                    700,
+                }}
+              >
+                FOLDER {folder}
+              </button>
+            );
+          },
+        )}
+      </div>
+
+      <RuledLine
+        label={`15 PNG MOCKUPS · FOLDER ${selectedFolder}`}
+      />
+
+      <div
+        style={{
+          display:
+            "grid",
+
+          gridTemplateColumns:
+            "repeat(2, minmax(0, 1fr))",
+
+          gap:
+            10,
+        }}
+      >
+        {visibleMockups.map(
+          (spec) => {
+            const isSelected =
+              spec.id ===
+              activeSpec.id;
+
+            return (
+              <button
+                key={spec.id}
+                type="button"
+                onClick={() =>
+                  handleSelect(
+                    spec,
+                  )
+                }
+                aria-pressed={
+                  isSelected
+                }
+                style={{
+                  minWidth:
+                    0,
+
+                  display:
+                    "flex",
+
+                  flexDirection:
+                    "column",
+
+                  gap:
+                    7,
+
+                  padding:
+                    6,
+
+                  borderRadius:
+                    8,
+
+                  background:
+                    isSelected
+                      ? ACCENT_SOFT
+                      : "#F2F0EA",
+
+                  border:
+                    `1px solid ${
+                      isSelected
+                        ? ACCENT
+                        : RULE
+                    }`,
+
+                  cursor:
+                    "pointer",
+
+                  textAlign:
+                    "left",
+                }}
+              >
+                <div
+                  style={{
+                    width:
+                      "100%",
+
+                    aspectRatio:
+                      "1 / 1",
+
+                    borderRadius:
+                      4,
+
+                    overflow:
+                      "hidden",
+
+                    background:
+                      "#ffffff",
+
+                    boxShadow:
+                      isSelected
+                        ? "0 4px 12px rgba(0,0,0,0.10)"
+                        : "none",
+                  }}
+                >
+                  <img
+                    src={
+                      spec.bgUrl
+                    }
+                    alt={
+                      spec.name
+                    }
+                    draggable={
+                      false
+                    }
+                    style={{
+                      width:
+                        "100%",
+
+                      height:
+                        "100%",
+
+                      objectFit:
+                        "cover",
+
+                      display:
+                        "block",
+                    }}
+                  />
+                </div>
+
+                <span
+                  style={{
+                    fontFamily:
+                      MONO_FONT,
+
+                    fontSize:
+                      9,
+
+                    fontWeight:
+                      700,
+
+                    color:
+                      isSelected
+                        ? ACCENT_DEEP
+                        : INK,
+
+                    overflow:
+                      "hidden",
+
+                    textOverflow:
+                      "ellipsis",
+
+                    whiteSpace:
+                      "nowrap",
+                  }}
+                >
+                  {folderLabel(
+                    spec.folder,
+                    spec.imageNumber,
+                  )}
+                </span>
+              </button>
+            );
+          },
+        )}
+      </div>
+
+      {!isDevMode && (
+        <div
+          style={{
+            marginTop:
+              "auto",
+
+            background:
+              BLUE_DEEP,
+
+            padding:
+              20,
+
+            borderRadius:
+              12,
+
+            display:
+              "flex",
+
+            flexDirection:
+              "column",
+
+            gap:
+              14,
+
+            boxShadow:
+              "0 16px 40px rgba(12,30,48,0.18)",
+          }}
+        >
+          <span
+            style={{
+              fontFamily:
+                MONO_FONT,
+
+              fontSize:
+                9,
+
+              color:
+                ACCENT,
+
+              fontWeight:
+                700,
+
+              letterSpacing:
+                "1px",
+            }}
+          >
+            PREMIUM ACCESS
+          </span>
+
+          <div
+            style={{
+              color:
+                "#ffffff",
+
+              fontSize:
+                15,
+
+              fontWeight:
+                700,
+
+              lineHeight:
+                1.5,
+            }}
+          >
+            Complete Brand Kit
+          </div>
 
           <p
             style={{
-              margin: 0,
-              fontSize: 9,
-              lineHeight: 1.7,
-              letterSpacing: "0.4px",
-              color: INK_FAINT,
+              color:
+                "rgba(255,255,255,0.72)",
+
+              fontSize:
+                12,
+
+              margin:
+                0,
+
+              lineHeight:
+                1.7,
             }}
           >
-            DRAG SLIDERS OVER THE LIVE PLATE, THEN COPY THE BLOCK ABOVE AND
-            REPLACE THE MATCHING ENTRY IN <strong>USER_MOCKUPS</strong>.
+            Professional brand
+            assets, high-quality
+            files and exclusive
+            mockups.
           </p>
-        </aside>
-      </div>
-    </section>
+
+          <button
+            type="button"
+            onClick={() => {}}
+            style={{
+              width:
+                "100%",
+
+              background:
+                ACCENT,
+
+              color:
+                "#ffffff",
+
+              border:
+                "none",
+
+              borderRadius:
+                7,
+
+              padding:
+                "13px 12px",
+
+              fontSize:
+                13,
+
+              fontWeight:
+                800,
+
+              cursor:
+                "pointer",
+
+              boxShadow:
+                "0 7px 18px rgba(216,80,30,0.30)",
+            }}
+          >
+            Get Brand Kit
+          </button>
+        </div>
+      )}
+
+      {isDevMode && (
+        <div
+          style={{
+            marginTop:
+              "auto",
+
+            background:
+              "#F2F0EA",
+
+            padding:
+              16,
+
+            borderRadius:
+              8,
+
+            display:
+              "flex",
+
+            flexDirection:
+              "column",
+
+            gap:
+              18,
+
+            border:
+              `1px solid ${RULE}`,
+          }}
+        >
+          <div
+            style={{
+              display:
+                "flex",
+
+              alignItems:
+                "center",
+
+              justifyContent:
+                "space-between",
+
+              gap:
+                10,
+            }}
+          >
+            <span
+              style={{
+                fontSize:
+                  10,
+
+                fontFamily:
+                  MONO_FONT,
+
+                fontWeight:
+                  700,
+
+                color:
+                  BLUE_DEEP,
+              }}
+            >
+              DEV CALIBRATION CORE
+            </span>
+
+            <span
+              style={{
+                fontFamily:
+                  MONO_FONT,
+
+                fontSize:
+                  8,
+
+                color:
+                  ACCENT_DEEP,
+
+                fontWeight:
+                  700,
+              }}
+            >
+              DEV MODE
+            </span>
+          </div>
+
+          <div
+            style={{
+              display:
+                "flex",
+
+              flexDirection:
+                "column",
+
+              gap:
+                13,
+            }}
+          >
+            <CalibrationSlider
+              label="Top"
+              value={
+                safeCalibration.top
+              }
+              min={0}
+              max={100}
+              step={1}
+              suffix="%"
+              onChange={(value) =>
+                updateCalibration(
+                  "top",
+                  value,
+                )
+              }
+            />
+
+            <CalibrationSlider
+              label="Left"
+              value={
+                safeCalibration.left
+              }
+              min={0}
+              max={100}
+              step={1}
+              suffix="%"
+              onChange={(value) =>
+                updateCalibration(
+                  "left",
+                  value,
+                )
+              }
+            />
+
+            <CalibrationSlider
+              label="Scale"
+              value={
+                safeCalibration.scale
+              }
+              min={0.3}
+              max={4}
+              step={0.05}
+              onChange={(value) =>
+                updateCalibration(
+                  "scale",
+                  value,
+                )
+              }
+            />
+
+            <CalibrationSlider
+              label="Perspective"
+              value={
+                safeCalibration.perspective
+              }
+              min={200}
+              max={2000}
+              step={50}
+              suffix="px"
+              onChange={(value) =>
+                updateCalibration(
+                  "perspective",
+                  value,
+                )
+              }
+            />
+
+            <CalibrationSlider
+              label="Rotate X"
+              value={
+                safeCalibration.rotateX
+              }
+              min={-90}
+              max={90}
+              step={1}
+              suffix="deg"
+              onChange={(value) =>
+                updateCalibration(
+                  "rotateX",
+                  value,
+                )
+              }
+            />
+
+            <CalibrationSlider
+              label="Rotate Y"
+              value={
+                safeCalibration.rotateY
+              }
+              min={-90}
+              max={90}
+              step={1}
+              suffix="deg"
+              onChange={(value) =>
+                updateCalibration(
+                  "rotateY",
+                  value,
+                )
+              }
+            />
+
+            <CalibrationSlider
+              label="Rotate Z"
+              value={
+                safeCalibration.rotateZ
+              }
+              min={-180}
+              max={180}
+              step={1}
+              suffix="deg"
+              onChange={(value) =>
+                updateCalibration(
+                  "rotateZ",
+                  value,
+                )
+              }
+            />
+          </div>
+
+          <RuledLine
+            label="LOGO VISIBILITY"
+          />
+
+          <div
+            style={{
+              display:
+                "grid",
+
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+
+              gap:
+                8,
+            }}
+          >
+            {(
+              [
+                [
+                  "auto",
+                  "AUTO",
+                ],
+                [
+                  "normal",
+                  "NORMAL",
+                ],
+                [
+                  "light",
+                  "LIGHT",
+                ],
+                [
+                  "dark",
+                  "DARK",
+                ],
+              ] as const
+            ).map(
+              ([
+                value,
+                label,
+              ]) => {
+                const active =
+                  safeCalibration.contrastMode ===
+                  value;
+
+                return (
+                  <button
+                    key={
+                      value
+                    }
+                    type="button"
+                    onClick={() =>
+                      updateCalibration(
+                        "contrastMode",
+                        value,
+                      )
+                    }
+                    style={{
+                      border:
+                        `1px solid ${
+                          active
+                            ? ACCENT
+                            : RULE
+                        }`,
+
+                      background:
+                        active
+                          ? ACCENT_SOFT
+                          : "#F2F0EA",
+
+                      color:
+                        active
+                          ? ACCENT_DEEP
+                          : INK,
+
+                      borderRadius:
+                        7,
+
+                      padding:
+                        "9px 7px",
+
+                      cursor:
+                        "pointer",
+
+                      fontFamily:
+                        MONO_FONT,
+
+                      fontSize:
+                        9,
+
+                      fontWeight:
+                        700,
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          <CalibrationSlider
+            label="Opacity"
+            value={
+              safeCalibration.opacity *
+              100
+            }
+            min={20}
+            max={100}
+            step={1}
+            suffix="%"
+            onChange={(value) =>
+              updateCalibration(
+                "opacity",
+                value / 100,
+              )
+            }
+          />
+
+          <CalibrationSlider
+            label="Shadow"
+            value={
+              safeCalibration.shadow *
+              100
+            }
+            min={0}
+            max={100}
+            step={1}
+            suffix="%"
+            onChange={(value) =>
+              updateCalibration(
+                "shadow",
+                value / 100,
+              )
+            }
+          />
+
+          <CalibrationSlider
+            label="Outline"
+            value={
+              safeCalibration.outline *
+              100
+            }
+            min={0}
+            max={100}
+            step={1}
+            suffix="%"
+            onChange={(value) =>
+              updateCalibration(
+                "outline",
+                value / 100,
+              )
+            }
+          />
+
+          <div
+            style={{
+              background:
+                "#050A0F",
+
+              padding:
+                13,
+
+              borderRadius:
+                7,
+
+              color:
+                "#A5B4FC",
+
+              fontFamily:
+                MONO_FONT,
+
+              fontSize:
+                10,
+
+              position:
+                "relative",
+
+              border:
+                "1px solid rgba(255,255,255,0.06)",
+
+              boxShadow:
+                "0 10px 30px rgba(0,0,0,0.16)",
+            }}
+          >
+            <div
+              style={{
+                color:
+                  "#ffffff",
+
+                fontSize:
+                  9,
+
+                marginBottom:
+                  8,
+
+                opacity:
+                  0.5,
+
+                letterSpacing:
+                  "0.06em",
+              }}
+            >
+              OUTPUT
+            </div>
+
+            <pre
+              style={{
+                margin:
+                  0,
+
+                whiteSpace:
+                  "pre-wrap",
+
+                lineHeight:
+                  1.65,
+              }}
+            >
+{`defaultTop: ${safeCalibration.top},
+defaultLeft: ${safeCalibration.left},
+defaultScale: ${safeCalibration.scale},
+defaultPerspective: ${safeCalibration.perspective},
+defaultRotateX: ${safeCalibration.rotateX},
+defaultRotateY: ${safeCalibration.rotateY},
+defaultRotateZ: ${safeCalibration.rotateZ},
+opacity: ${safeCalibration.opacity},
+contrastMode: "${getFolderLogoMode(activeSpec.folder)}",
+logoColor: "${getLogoColorForFolder(activeSpec.folder)}",`}
+            </pre>
+
+            <button
+              type="button"
+              onClick={
+                copyConfigCode
+              }
+              style={{
+                marginTop:
+                  10,
+
+                width:
+                  "100%",
+
+                background:
+                  "rgba(255,255,255,0.10)",
+
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+
+                color:
+                  "#ffffff",
+
+                padding:
+                  "7px 0",
+
+                borderRadius:
+                  5,
+
+                cursor:
+                  "pointer",
+
+                fontSize:
+                  9,
+
+                fontWeight:
+                  700,
+
+                fontFamily:
+                  MONO_FONT,
+              }}
+            >
+              COPY SPEC SNIPPET
+            </button>
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+/* =========================================================
+   MAIN COMPONENT
+========================================================= */
+
+export interface DynamicMockupGeneratorProps {
+  renderLogoHTML:
+    () => ReactNode;
+
+  logoColor?: string;
+
+  userMockups?: MockupSpec[];
+}
+
+export default function DynamicMockupGenerator({
+  renderLogoHTML,
+  logoColor: _logoColor,
+  userMockups = USER_MOCKUPS,
+}: DynamicMockupGeneratorProps) {
+  const {
+    activeSpec,
+
+    calibration,
+
+    setActiveSpec,
+
+    setCalibration,
+  } =
+    useMockupGenerator(
+      userMockups,
+    );
+
+  return (
+    <div
+      style={{
+        display:
+          "grid",
+
+        gridTemplateColumns:
+          "minmax(0, 1fr) 360px",
+
+        width:
+          "100%",
+
+        height:
+          "100%",
+
+        minHeight:
+          0,
+
+        background:
+          "transparent",
+      }}
+    >
+      <main
+        style={{
+          minWidth:
+            0,
+
+          minHeight:
+            0,
+
+          overflow:
+            "hidden",
+
+          display:
+            "flex",
+
+          alignItems:
+            "center",
+
+          justifyContent:
+            "center",
+        }}
+      >
+        <MockupStage
+          activeSpec={
+            activeSpec
+          }
+          calibration={
+            calibration
+          }
+          renderLogoHTML={
+            renderLogoHTML
+          }
+        />
+      </main>
+
+      <MockupControls
+        activeSpec={
+          activeSpec
+        }
+        calibration={
+          calibration
+        }
+        setCalibration={
+          setCalibration
+        }
+        setActiveSpec={
+          setActiveSpec
+        }
+        USER_MOCKUPS={
+          userMockups
+        }
+      />
+    </div>
   );
 }
